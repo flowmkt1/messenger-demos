@@ -16,18 +16,20 @@
   .head h1{font-size:30px;font-weight:900;letter-spacing:.01em;}
   .head p{color:#90a3b6;font-size:14.5px;margin-top:10px;line-height:1.6;}
 
-  .cards{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;max-width:760px;}
+  .cards{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;max-width:1100px;}
   .card{position:relative;width:340px;background:#222b35;border:1px solid #36424f;border-radius:20px;
     padding:28px 26px;text-decoration:none;color:inherit;transition:.2s;overflow:hidden;display:flex;flex-direction:column;gap:14px;}
   .card::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;}
   .card.line::before{background:#06c755;}
   .card.wa::before{background:#25d366;}
+  .card.ol::before{background:#0f6cbd;}
   .card:hover{transform:translateY(-5px);border-color:#5a6b7d;box-shadow:0 18px 40px rgba(0,0,0,.45);}
 
   .top{display:flex;align-items:center;gap:14px;}
   .badge{width:58px;height:58px;border-radius:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.3);}
   .line .badge{background:#06c755;}
   .wa .badge{background:#25d366;}
+  .ol .badge{background:#0f6cbd;}
   .badge svg{width:34px;height:34px;}
   .top h2{font-size:21px;font-weight:700;}
   .top .tag{font-size:12.5px;color:#8ea3b8;margin-top:3px;}
@@ -40,6 +42,7 @@
     padding:9px 18px;font-size:13.5px;font-weight:600;color:#dfe9f2;transition:.15s;}
   .card.line:hover .go{background:#06c755;border-color:#06c755;color:#06200f;}
   .card.wa:hover .go{background:#25d366;border-color:#25d366;color:#06200f;}
+  .card.ol:hover .go{background:#0f6cbd;border-color:#0f6cbd;color:#fff;}
 
   footer{margin-top:34px;color:#5f7185;font-size:12.5px;text-align:center;line-height:1.8;max-width:560px;}
 </style>
@@ -74,6 +77,20 @@
         <li>日本語 / English 言語切替</li>
         <li>プロフィール・発信者名つきグループ表示</li>
         <li>9:16 / 3:4 比率・モックアップ ON/OFF</li>
+      </ul>
+      <span class="go">開く →</span>
+    </a>
+
+    <a class="card ol" href="outlook-jp.html">
+      <div class="top">
+        <span class="badge"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 4h7a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-7V4z" opacity=".55"/><path d="M14 8.5l6 3.7V8.7l-6-.2zm0 0v6l6-.2v-2.1l-6-3.7z" fill="#fff" opacity=".25"/><rect x="2" y="5.5" width="11" height="13" rx="2.5"/><circle cx="7.5" cy="12" r="3.4" fill="#0f6cbd"/><circle cx="7.5" cy="12" r="1.7" fill="#fff"/></svg></span>
+        <div><h2>Outlook</h2><div class="tag">メール（PC / モバイル）</div></div>
+      </div>
+      <ul class="feats">
+        <li>PC（3ペイン）/ モバイル アプリ切替</li>
+        <li>業種・職務別の受信トレイ（9種）</li>
+        <li>日本語 / English 言語切替</li>
+        <li>新着受信・開封・検索を自動再生</li>
       </ul>
       <span class="go">開く →</span>
     </a>

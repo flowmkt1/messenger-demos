@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outlook風 メール デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  body{font-family:"Noto Sans JP","Segoe UI",sans-serif;background:#202730;min-height:100vh;
+    display:flex;align-items:center;justify-content:center;padding:24px 16px 40px 320px;}
+
+  /* ===== 조작 패널 ===== */
+  .controls{width:280px;flex-shrink:0;position:fixed;left:20px;top:24px;
+    background:#2b333d;border:1px solid #3b4654;border-radius:14px;padding:14px 16px;color:#cdd6e0;z-index:50;}
+  .controls h2{font-size:13px;font-weight:600;color:#8ea3b8;margin:12px 0 8px;letter-spacing:.02em;}
+  .lbl{font-size:12px;color:#8ea3b8;margin-bottom:6px;}
+  .seg{display:flex;gap:6px;margin-bottom:6px;}
+  .seg .btn{flex:1;text-align:center;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px;}
+  .chip{border:1px solid #45525f;background:#333d49;color:#c7d2dd;font-size:12.5px;
+    padding:6px 11px;border-radius:999px;cursor:pointer;transition:.15s;white-space:nowrap;}
+  .chip:hover{background:#3d4956;}
+  .chip.active{background:#0f6cbd;border-color:#0f6cbd;color:#fff;font-weight:600;}
+  .row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+  .btn{border:none;background:#3f4b58;color:#dfe7ef;font-size:12.5px;padding:7px 12px;border-radius:8px;cursor:pointer;transition:.15s;}
+  .btn:hover{background:#4a5867;}
+  .btn.active{background:#0f6cbd;color:#fff;font-weight:600;}
+  .toggle{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#aebccb;cursor:pointer;user-select:none;}
+  .toggle input{width:15px;height:15px;accent-color:#0f6cbd;cursor:pointer;}
+
+  /* ===== 무대 ===== */
+  .stage{display:flex;align-items:center;justify-content:center;}
+
+  /* ========== PC (데스크톱 Outlook) ========== */
+  .pcwin{width:1000px;height:624px;background:#faf9f8;border-radius:10px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;position:relative;}
+  .pcwin.flat{border-radius:0;box-shadow:none;}
+  .pc-top{height:48px;background:#fff;border-bottom:1px solid #edebe9;display:flex;align-items:center;gap:12px;padding:0 14px;}
+  .pc-top .logo{display:flex;align-items:center;gap:8px;font-weight:600;color:#0f6cbd;font-size:15px;}
+  .pc-top .logo .sq{width:20px;height:20px;border-radius:4px;background:#0f6cbd;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;}
+  .pc-search{flex:1;max-width:420px;margin:0 auto;height:30px;background:#f3f2f1;border:1px solid #e1dfdd;border-radius:6px;
+    display:flex;align-items:center;gap:8px;padding:0 10px;color:#605e5c;font-size:13px;}
+  .pc-search input{border:none;background:none;outline:none;flex:1;font:inherit;color:#323130;}
+  .pc-top .tr{display:flex;align-items:center;gap:14px;color:#605e5c;margin-left:auto;}
+  .pc-top .tr .dot{width:18px;height:18px;}
+  .pc-ribbon{height:36px;background:#fff;border-bottom:1px solid #edebe9;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13px;color:#444;}
+  .pc-ribbon .rt{padding:7px 2px;cursor:default;}
+  .pc-ribbon .rt.on{color:#0f6cbd;font-weight:600;box-shadow:inset 0 -2px 0 #0f6cbd;}
+
+  .pc-body{flex:1;display:flex;min-height:0;}
+  .pc-nav{width:200px;background:#faf9f8;border-right:1px solid #edebe9;padding:10px 8px;overflow-y:auto;font-size:13px;}
+  .pc-nav .newbtn{width:100%;background:#0f6cbd;color:#fff;border:none;border-radius:6px;padding:8px;font:inherit;font-weight:600;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:7px;justify-content:center;}
+  .pc-nav .navsec{color:#8a8886;font-size:11.5px;font-weight:600;margin:10px 6px 4px;}
+  .pc-nav .nav{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:5px;color:#323130;cursor:default;}
+  .pc-nav .nav .ico{width:16px;text-align:center;opacity:.7;}
+  .pc-nav .nav .cnt{margin-left:auto;color:#8a8886;font-size:12px;}
+  .pc-nav .nav.on{background:#eef6fc;color:#0f6cbd;font-weight:600;}
+  .pc-nav .nav.on .cnt{color:#0f6cbd;}
+
+  .pc-list{width:368px;background:#fff;border-right:1px solid #edebe9;display:flex;flex-direction:column;min-width:0;}
+  .pc-list .lhead{display:flex;align-items:center;gap:18px;padding:10px 14px 0;}
+  .pc-list .ft{font-size:14px;color:#605e5c;padding-bottom:8px;cursor:default;}
+  .pc-list .ft.on{color:#323130;font-weight:600;box-shadow:inset 0 -2px 0 #0f6cbd;}
+  .pc-list .scroll{flex:1;overflow-y:auto;}
+  .pc-list .scroll::-webkit-scrollbar{width:8px;}
+  .pc-list .scroll::-webkit-scrollbar-thumb{background:#d2d0ce;border-radius:4px;}
+
+  .grphd{padding:8px 14px 4px;font-size:12px;font-weight:600;color:#605e5c;background:#fff;position:sticky;top:0;}
+  .mailrow{display:flex;gap:10px;padding:9px 12px 9px 10px;border-bottom:1px solid #f3f2f1;cursor:pointer;position:relative;}
+  .mailrow:hover{background:#f8f8f8;}
+  .mailrow.sel{background:#eaf2fb;}
+  .mailrow.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#0f6cbd;}
+  .mailrow .av{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;margin-top:2px;}
+  .mailrow .mid{flex:1;min-width:0;}
+  .mailrow .l1{display:flex;align-items:center;gap:6px;}
+  .mailrow .from{font-size:13.5px;color:#201f1e;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mailrow .time{font-size:12px;color:#8a8886;flex-shrink:0;}
+  .mailrow .subj{font-size:13px;color:#201f1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .mailrow .prev{font-size:12.5px;color:#8a8886;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .mailrow.unread .from{font-weight:700;}
+  .mailrow.unread .subj{font-weight:700;color:#0f6cbd;}
+  .mailrow.unread .udot{position:absolute;left:3px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:#0f6cbd;}
+
+  .pc-read{flex:1;background:#fff;display:flex;flex-direction:column;min-width:0;}
+  .pc-read .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#a19f9d;gap:10px;}
+  .pc-read .empty .ic{font-size:46px;opacity:.4;}
+  .rd{flex:1;display:flex;flex-direction:column;min-height:0;}
+  .rd .rsubj{font-size:19px;font-weight:600;color:#201f1e;padding:16px 22px 8px;}
+  .rd .rhead{display:flex;align-items:center;gap:11px;padding:4px 22px 14px;border-bottom:1px solid #edebe9;}
+  .rd .rhead .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:600;flex-shrink:0;}
+  .rd .rhead .who{flex:1;min-width:0;}
+  .rd .rhead .nm{font-size:14px;font-weight:600;color:#201f1e;}
+  .rd .rhead .to{font-size:12.5px;color:#8a8886;}
+  .rd .rhead .rtime{font-size:12.5px;color:#8a8886;}
+  .rd .rbody{flex:1;overflow-y:auto;padding:18px 22px;font-size:14px;line-height:1.7;color:#323130;white-space:pre-line;}
+  .rd .ract{display:flex;gap:8px;padding:12px 22px;border-top:1px solid #edebe9;}
+  .rd .ract .ab{border:1px solid #d2d0ce;background:#fff;border-radius:6px;padding:7px 16px;font:inherit;font-size:13px;color:#323130;cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .rd .ract .ab:hover{background:#f3f2f1;}
+
+  /* 토스트 */
+  .toast{position:absolute;right:18px;bottom:18px;background:#fff;border:1px solid #e1dfdd;border-left:4px solid #0f6cbd;
+    border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:11px 14px;min-width:230px;max-width:300px;
+    opacity:0;transform:translateY(12px);transition:.3s;z-index:30;pointer-events:none;}
+  .toast.show{opacity:1;transform:none;}
+  .toast .tt{font-size:12px;color:#0f6cbd;font-weight:600;margin-bottom:3px;}
+  .toast .tf{font-size:13px;font-weight:600;color:#201f1e;}
+  .toast .ts{font-size:12.5px;color:#605e5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* ========== Mobile (Outlook 앱) ========== */
+  .phone{width:380px;height:760px;background:#000;border-radius:42px;padding:11px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 2px #2c2c2c;transition:.2s;}
+  .phone.r34{height:520px;}
+  .phone.flat{background:none;border-radius:0;padding:0;box-shadow:none;}
+  .phone.flat .mscreen{border-radius:0;}
+  .mscreen{width:100%;height:100%;border-radius:32px;overflow:hidden;background:#fff;display:flex;flex-direction:column;position:relative;}
+  .m-status{height:24px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:12px;font-weight:600;color:#201f1e;}
+  .m-status .batt{width:22px;height:11px;border:1px solid #201f1e;border-radius:3px;position:relative;padding:1px;}
+  .m-status .batt::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:5px;background:#201f1e;border-radius:0 1px 1px 0;}
+  .m-status .batt i{display:block;width:80%;height:100%;background:#201f1e;border-radius:1px;}
+  .m-head{padding:6px 14px 8px;border-bottom:1px solid #edebe9;}
+  .m-head .r1{display:flex;align-items:center;gap:12px;}
+  .m-head .mav{width:30px;height:30px;border-radius:50%;background:#0f6cbd;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+  .m-head .mtit{font-size:20px;font-weight:700;color:#201f1e;flex:1;}
+  .m-head .mic{color:#605e5c;font-size:18px;}
+  .m-search{margin-top:10px;height:36px;background:#f3f2f1;border-radius:8px;display:flex;align-items:center;gap:8px;padding:0 12px;color:#8a8886;font-size:14px;}
+  .m-search input{border:none;background:none;outline:none;flex:1;font:inherit;color:#323130;}
+  .m-tabs{display:flex;gap:22px;padding:8px 16px 0;}
+  .m-tabs .mt{font-size:14px;color:#8a8886;padding-bottom:8px;}
+  .m-tabs .mt.on{color:#0f6cbd;font-weight:600;box-shadow:inset 0 -2px 0 #0f6cbd;}
+  .m-list{flex:1;overflow-y:auto;}
+  .m-list::-webkit-scrollbar{display:none;}
+  .mrow{display:flex;gap:11px;padding:12px 14px;border-bottom:1px solid #f3f2f1;cursor:pointer;position:relative;}
+  .mrow:active{background:#f5f5f5;}
+  .mrow .av{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:600;}
+  .mrow .mid{flex:1;min-width:0;}
+  .mrow .l1{display:flex;gap:6px;align-items:center;}
+  .mrow .from{font-size:14.5px;color:#201f1e;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mrow .time{font-size:12px;color:#8a8886;}
+  .mrow .subj{font-size:13.5px;color:#201f1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .mrow .prev{font-size:13px;color:#8a8886;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .mrow.unread .from,.mrow.unread .subj{font-weight:700;}
+  .mrow.unread .udot{position:absolute;left:4px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:#0f6cbd;}
+  .mgrp{padding:10px 16px 4px;font-size:12.5px;font-weight:600;color:#605e5c;}
+  .m-compose{position:absolute;right:18px;bottom:74px;width:52px;height:52px;border-radius:14px;background:#0f6cbd;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 16px rgba(15,108,189,.4);z-index:12;}
+  .m-bottom{height:54px;border-top:1px solid #edebe9;display:flex;align-items:center;justify-content:space-around;color:#8a8886;font-size:11px;}
+  .m-bottom .bn{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .m-bottom .bn.on{color:#0f6cbd;}
+  .m-bottom .bn .bi{font-size:18px;}
+
+  .m-read{position:absolute;inset:0;background:#fff;z-index:20;display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .28s ease;}
+  .m-read.open{transform:none;}
+  .m-read .mr-top{height:50px;display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:1px solid #edebe9;color:#0f6cbd;}
+  .m-read .mr-top .bk{font-size:24px;}
+  .m-read .mr-top .sp{flex:1;}
+  .m-read .mr-top .mic{color:#605e5c;font-size:17px;}
+  .m-read .mr-subj{font-size:19px;font-weight:700;color:#201f1e;padding:14px 16px 10px;}
+  .m-read .mr-from{display:flex;align-items:center;gap:11px;padding:0 16px 14px;border-bottom:1px solid #edebe9;}
+  .m-read .mr-from .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;}
+  .m-read .mr-from .nm{font-size:14px;font-weight:600;color:#201f1e;}
+  .m-read .mr-from .to{font-size:12.5px;color:#8a8886;}
+  .m-read .mr-body{flex:1;overflow-y:auto;padding:16px;font-size:15px;line-height:1.75;color:#323130;white-space:pre-line;}
+  .m-read .mr-act{display:flex;gap:8px;padding:10px 14px;border-top:1px solid #edebe9;}
+  .m-read .mr-act .ab{flex:1;border:1px solid #d2d0ce;background:#fff;border-radius:8px;padding:9px;font:inherit;font-size:13px;color:#323130;text-align:center;}
+
+  /* ===== Outlook PC 충실도 보강 ===== */
+  .pcwin{width:1020px;height:648px;background:#f3f2f1;}
+  .pc-title{height:46px;background:#f5f4f2;display:flex;align-items:center;gap:12px;padding:0 0 0 12px;}
+  .pc-title .logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:#0a2a4d;}
+  .pc-title .logo svg{display:block;}
+  .pc-search{flex:0 1 480px;margin:0 auto;height:30px;background:#fff;border:1px solid #e1dfdd;border-radius:6px;display:flex;align-items:center;gap:8px;padding:0 10px;color:#605e5c;font-size:13px;box-shadow:0 1px 1px rgba(0,0,0,.04);}
+  .pc-search input{border:none;background:none;outline:none;flex:1;font:inherit;color:#323130;}
+  .pc-title .tr{display:flex;align-items:center;margin-left:auto;}
+  .pc-title .ti{width:40px;height:46px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#555;}
+  .pc-title .ti:hover{background:#eceae9;}
+  .pc-title .wbtns{display:flex;height:46px;margin-left:6px;}
+  .pc-title .wb{width:46px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#444;}
+  .pc-title .wb:hover{background:#e5e5e5;}
+  .pc-title .wb.cl:hover{background:#e81123;color:#fff;}
+
+  .pc-tabs{height:34px;background:#f5f4f2;display:flex;align-items:center;gap:2px;padding:0 12px;border-bottom:1px solid #edebe9;}
+  .pc-tabs .rt{font-size:13px;color:#444;padding:6px 10px;border-radius:4px;position:relative;cursor:default;}
+  .pc-tabs .rt.on{color:#0f6cbd;font-weight:600;}
+  .pc-tabs .rt.on::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;background:#0f6cbd;}
+
+  .pc-cmd{height:44px;background:#fff;display:flex;align-items:center;padding:0 8px;border-bottom:1px solid #edebe9;font-size:12.5px;color:#323130;overflow:hidden;}
+  .pc-cmd .ci{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:5px;white-space:nowrap;cursor:default;}
+  .pc-cmd .ci:hover{background:#f3f2f1;}
+  .pc-cmd .ci .g{font-size:14px;}
+  .pc-cmd .sep{width:1px;height:20px;background:#e1dfdd;margin:0 5px;}
+
+  .pc-main{flex:1;display:flex;min-height:0;}
+  .pc-rail{width:48px;background:#f5f4f2;border-right:1px solid #edebe9;display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:4px;}
+  .pc-rail .ri{width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#605e5c;position:relative;cursor:default;}
+  .pc-rail .ri:hover{background:#eceae9;}
+  .pc-rail .ri.on{color:#0f6cbd;}
+  .pc-rail .ri.on::before{content:"";position:absolute;left:-4px;top:9px;bottom:9px;width:3px;border-radius:2px;background:#0f6cbd;}
+
+  .pc-nav{width:212px;background:#f5f4f2;}
+  .pc-list .lhead{display:flex;align-items:center;padding:10px 12px 0;gap:10px;}
+  .pc-list .fts{display:flex;gap:18px;flex:1;}
+  .pc-list .filter{color:#605e5c;font-size:14px;padding-bottom:8px;}
+
+  .mailrow.unread .udot{left:0;top:9px;bottom:9px;width:3px;height:auto;border-radius:0 2px 2px 0;transform:none;}
+
+  .rd .rtools{display:flex;align-items:center;gap:2px;padding:8px 14px 0;}
+  .rd .rtools .sp{flex:1;}
+  .rd .rtools .ti{width:32px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:5px;color:#555;font-size:14px;cursor:default;}
+  .rd .rtools .ti:hover{background:#f3f2f1;}
+  .rd .rsubj{padding-top:10px;}
+</style>
+</head>
+<body>
+
+  <div class="controls">
+    <div class="lbl">기기</div>
+    <div class="seg">
+      <button class="btn dev active" data-dev="pc">🖥 PC</button>
+      <button class="btn dev" data-dev="mobile">📱 Mobile</button>
+    </div>
+    <div class="lbl">언어 (화면 표시 언어)</div>
+    <div class="seg">
+      <button class="btn lang active" data-lang="ja">日本語</button>
+      <button class="btn lang" data-lang="en">English</button>
+    </div>
+    <h2>직무/산업 선택</h2>
+    <div class="chips" id="chips"></div>
+    <div class="row2">
+      <button class="btn" id="replay">▶ 시나리오 재생</button>
+    </div>
+    <div class="row2">
+      <label class="toggle"><input type="checkbox" id="mockup" checked> 목업/창 테두리</label>
+    </div>
+    <div class="row2" id="ratioRow" style="display:none;">
+      <span style="font-size:12.5px;color:#aebccb;">비율</span>
+      <button class="btn ratio active" data-ratio="916">9:16</button>
+      <button class="btn ratio" data-ratio="34">3:4</button>
+    </div>
+    <div class="row2"><span style="font-size:11.5px;color:#6f8194;">메일 행을 직접 클릭/검색해도 됩니다</span></div>
+  </div>
+
+  <div class="stage">
+    <!-- ===== PC ===== -->
+    <div class="pcwin" id="pcwin">
+      <div class="pc-title">
+        <div class="logo">
+          <svg width="22" height="22" viewBox="0 0 32 32"><rect x="14" y="6" width="17" height="20" rx="2.5" fill="#0F6CBD"/><path d="M16 11h13v1.6H16zM16 15h13v1.6H16zM16 19h9v1.6h-9z" fill="#fff" opacity=".95"/><rect x="1" y="9" width="16" height="16" rx="3" fill="#0A4F8F"/><text x="9" y="21" font-size="12" font-weight="700" fill="#fff" text-anchor="middle" font-family="Arial,sans-serif">O</text></svg>
+          Outlook
+        </div>
+        <div class="pc-search">🔍 <input id="pcSearch" placeholder="検索"></div>
+        <div class="tr">
+          <span class="ti">▦</span><span class="ti">🔔</span><span class="ti">⚙</span>
+          <div class="wbtns"><span class="wb">─</span><span class="wb">▢</span><span class="wb cl">✕</span></div>
+        </div>
+      </div>
+      <div class="pc-tabs" id="pcRibbon"></div>
+      <div class="pc-cmd" id="pcCmd"></div>
+      <div class="pc-main">
+        <div class="pc-rail">
+          <span class="ri on">✉</span><span class="ri">📅</span><span class="ri">👥</span><span class="ri">☑</span><span class="ri">📁</span>
+        </div>
+        <div class="pc-nav" id="pcNav"></div>
+        <div class="pc-list">
+          <div class="lhead"><div class="fts"><span class="ft on" id="pcFocused">優先</span><span class="ft" id="pcOther">その他</span></div><span class="filter">⤓</span></div>
+          <div class="scroll" id="pcList"></div>
+        </div>
+        <div class="pc-read" id="pcRead"></div>
+      </div>
+      <div class="toast" id="pcToast"><div class="tt" id="toastTt">新着メール</div><div class="tf" id="toastFrom"></div><div class="ts" id="toastSub"></div></div>
+    </div>
+
+    <!-- ===== Mobile ===== -->
+    <div class="phone" id="phone" style="display:none;">
+      <div class="mscreen">
+        <div class="m-status"><span>17:08</span><span class="right"><span class="batt"><i></i></span></span></div>
+        <div class="m-head">
+          <div class="r1"><span class="mav" id="mbAv">O</span><span class="mtit" id="mbTitle">受信トレイ</span><span class="mic">⌕</span><span class="mic">⋯</span></div>
+          <div class="m-search">🔍 <input id="mbSearch" placeholder="検索"></div>
+          <div class="m-tabs"><span class="mt on" id="mbFocused">優先</span><span class="mt" id="mbOther">その他</span></div>
+        </div>
+        <div class="m-list" id="mbList"></div>
+        <div class="m-compose">✎</div>
+        <div class="m-bottom" id="mbBottom"></div>
+        <div class="m-read" id="mbRead"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== UI 텍스트 ===== */
+const UI={
+  ja:{search:"検索",inbox:"受信トレイ",focused:"優先",other:"その他",today:"今日",yest:"昨日",
+      to:"宛先: あなた",empty:"メールを選択して内容を表示",newmail:"新着メール",
+      reply:"返信",replyall:"全員に返信",forward:"転送",del:"削除",arch:"アーカイブ",move:"移動",flag:"フラグ",
+      favorites:"お気に入り",drafts:"下書き",sent:"送信済み",deleted:"削除済み",junk:"迷惑メール",archive:"アーカイブ",
+      expenses:"経費",invoices:"請求書",newbtn:"新規メール",
+      tabs:{home:"ホーム",view:"表示",help:"ヘルプ",msg:"メッセージ",ins:"挿入",fmt:"書式",opt:"オプション"},
+      bottom:["メール","予定表","連絡先","設定"]},
+  en:{search:"Search",inbox:"Inbox",focused:"Focused",other:"Other",today:"Today",yest:"Yesterday",
+      to:"To: You",empty:"Select an email to read",newmail:"New message",
+      reply:"Reply",replyall:"Reply all",forward:"Forward",del:"Delete",arch:"Archive",move:"Move",flag:"Flag",
+      favorites:"Favorites",drafts:"Drafts",sent:"Sent Items",deleted:"Deleted Items",junk:"Junk Email",archive:"Archive",
+      expenses:"Expenses",invoices:"Invoices",newbtn:"New mail",
+      tabs:{home:"Home",view:"View",help:"Help",msg:"Message",ins:"Insert",fmt:"Format",opt:"Options"},
+      bottom:["Mail","Calendar","Contacts","Settings"]}
+};
+const P=["#2e8bda","#d9534f","#c77d1a","#8e44ad","#1f9d77","#c2417f","#2b7a78","#b9770e","#3a78c2","#6b7280"];
+
+/* ===== 업종별 메일 데이터 (日/英) ===== */
+const scenarios=[
+ {key:"IT·개발", q:{ja:"リリース",en:"release"}, mails:[
+  {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"リリース手順書の共有",en:"Release runbook shared"},p:{ja:"本番リリースの手順書をアップしました。",en:"I've uploaded the production release runbook."},b:{ja:"お疲れさまです。\n本番リリースの手順書をドキュメントに上げました。ご確認をお願いします。",en:"Hi team,\nI've uploaded the production release runbook to the docs. Please review."},t:"16:42",g:"today",u:false},
+  {f:{ja:"CI/CDボット",en:"CI/CD Bot"},c:P[4],s:{ja:"デプロイ完了通知",en:"Deployment completed"},p:{ja:"v2.4.0 のデプロイが完了しました。",en:"Deployment of v2.4.0 has completed."},b:{ja:"v2.4.0 のデプロイが正常に完了しました。\nエラーは検出されていません。",en:"Deployment of v2.4.0 completed successfully.\nNo errors detected."},t:"16:20",g:"today",u:true},
+  {f:{ja:"田中",en:"Tanaka"},c:P[1],s:{ja:"コードレビュー依頼",en:"Code review request"},p:{ja:"PR #128 のレビューをお願いします。",en:"Please review PR #128."},b:{ja:"PR #128 のレビューをお願いできますか。\n優先度は中です。",en:"Could you review PR #128?\nPriority is medium."},t:"15:55",g:"today",u:false},
+  {f:{ja:"高橋",en:"Takahashi"},c:P[3],s:{ja:"週次MTGの議事録",en:"Weekly meeting notes"},p:{ja:"本日の定例MTGの議事録です。",en:"Here are today's weekly meeting notes."},b:{ja:"本日の定例MTGの議事録を共有します。\n次回までのタスクをご確認ください。",en:"Sharing today's weekly meeting notes.\nPlease check the action items before next time."},t:"18:10",g:"yest",u:false},
+  {f:{ja:"GitHub",en:"GitHub"},c:P[9],s:{ja:"依存関係のセキュリティアラート",en:"Dependency security alert"},p:{ja:"1件の脆弱性が検出されました。",en:"1 vulnerability detected."},b:{ja:"リポジトリで1件の脆弱性が検出されました。\n対応をご検討ください。",en:"1 vulnerability was detected in your repository.\nPlease consider addressing it."},t:"14:02",g:"yest",u:false},
+  {f:{ja:"中村",en:"Nakamura"},c:P[2],s:{ja:"新機能の仕様確認",en:"Spec confirmation"},p:{ja:"確認したい点が2つあります。",en:"I have two points to confirm."},b:{ja:"新機能の仕様について、確認したい点が2つあります。\nお時間あるときにお願いします。",en:"I have two points to confirm about the new feature spec.\nWhenever you have time."},t:"11:30",g:"yest",u:false},
+  {f:{ja:"鈴木",en:"Suzuki"},c:P[8],s:{ja:"本番リリースの最終確認",en:"Final check before release"},p:{ja:"18時のデプロイ前に最終確認を。",en:"Final check before the 6 PM deploy."},b:{ja:"18時のデプロイ前に、最終確認をお願いします。\n問題なければ進めます。",en:"Please do a final check before the 6 PM deploy.\nWe'll proceed if all looks good."},t:"17:01",g:"today",u:true,in:true},
+  {f:{ja:"監視システム",en:"Monitoring"},c:P[1],s:{ja:"⚠ レスポンス遅延を検知",en:"⚠ Latency detected"},p:{ja:"一部APIで遅延を検知しました。",en:"Latency detected on some APIs."},b:{ja:"一部のAPIでレスポンス遅延を検知しました。\nダッシュボードをご確認ください。",en:"Latency was detected on some APIs.\nPlease check the dashboard."},t:"17:05",g:"today",u:true,in:true},
+ ]},
+ {key:"외식·매장", q:{ja:"予約",en:"reservation"}, mails:[
+  {f:{ja:"田中",en:"Tanaka"},c:P[1],s:{ja:"本日の予約状況",en:"Today's reservations"},p:{ja:"ランチの予約は合計13件です。",en:"13 lunch reservations in total."},b:{ja:"本日のランチ予約は合計13件です。\nピークは12時台になりそうです。",en:"We have 13 lunch reservations today.\nPeak will likely be around noon."},t:"16:30",g:"today",u:false},
+  {f:{ja:"本部",en:"HQ"},c:P[0],s:{ja:"新メニュー導入のご案内",en:"New menu rollout"},p:{ja:"季節限定メニューを来週から。",en:"Seasonal menu starts next week."},b:{ja:"季節限定の和風パスタを来週月曜から提供開始します。\nPOPを送付します。",en:"The seasonal Japanese-style pasta launches next Monday.\nWe'll send the POP materials."},t:"15:40",g:"today",u:true},
+  {f:{ja:"仕入れ業者",en:"Supplier"},c:P[4],s:{ja:"納品スケジュール変更",en:"Delivery schedule change"},p:{ja:"明日の納品が午前に変更。",en:"Tomorrow's delivery moved to morning."},b:{ja:"明日の食材納品が午前10時に変更となりました。\nご確認ください。",en:"Tomorrow's food delivery has been moved to 10 AM.\nPlease confirm."},t:"14:10",g:"today",u:false},
+  {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"シフト希望の提出",en:"Shift request"},p:{ja:"来週のシフト希望を提出します。",en:"Submitting my shift request for next week."},b:{ja:"来週のシフト希望を提出します。\n土日は終日勤務可能です。",en:"Submitting my shift request for next week.\nI can work full days on the weekend."},t:"19:20",g:"yest",u:false},
+  {f:{ja:"衛生管理",en:"Hygiene"},c:P[9],s:{ja:"月次清掃チェック",en:"Monthly cleaning check"},p:{ja:"今月の清掃チェック表です。",en:"This month's cleaning checklist."},b:{ja:"今月の清掃チェック表を共有します。\n期限までに記入をお願いします。",en:"Sharing this month's cleaning checklist.\nPlease fill it in by the deadline."},t:"13:00",g:"yest",u:false},
+  {f:{ja:"予約システム",en:"Booking"},c:P[2],s:{ja:"大人数の予約が入りました",en:"Large group booking"},p:{ja:"18名様の予約が入りました。",en:"A booking for 18 guests came in."},b:{ja:"金曜夜に18名様の予約が入りました。\nコース内容の確認をお願いします。",en:"A booking for 18 guests came in for Friday night.\nPlease confirm the course menu."},t:"10:15",g:"yest",u:false},
+  {f:{ja:"中村",en:"Nakamura"},c:P[2],s:{ja:"ホール人員の追加依頼",en:"Extra floor staff needed"},p:{ja:"本日ホールに1名追加を。",en:"Need one more on the floor today."},b:{ja:"本日、ホールに1名追加でお願いできますか。\n混雑が見込まれます。",en:"Could we add one more person to the floor today?\nWe expect it to be busy."},t:"17:02",g:"today",u:true,in:true},
+  {f:{ja:"本部",en:"HQ"},c:P[0],s:{ja:"売上速報（午前）",en:"Sales flash (AM)"},p:{ja:"午前売上が目標の6割に到達。",en:"Morning sales hit 60% of target."},b:{ja:"午前の売上が目標の6割に到達しました。\n好調です。",en:"Morning sales reached 60% of target.\nGreat momentum."},t:"17:06",g:"today",u:true,in:true},
+ ]},
+ {key:"건설·현장", q:{ja:"資材",en:"material"}, mails:[
+  {f:{ja:"鈴木",en:"Suzuki"},c:P[8],s:{ja:"本日の作業予定",en:"Today's work plan"},p:{ja:"基礎工事を午前中に。",en:"Foundation work in the morning."},b:{ja:"本日は基礎工事を午前中に終わらせる予定です。\n安全第一で進めます。",en:"We plan to finish the foundation work this morning.\nSafety first."},t:"16:25",g:"today",u:false},
+  {f:{ja:"気象情報",en:"Weather"},c:P[0],s:{ja:"午後の降雨予報",en:"Rain forecast PM"},p:{ja:"午後から雨の予報です。",en:"Rain forecast from the afternoon."},b:{ja:"午後3時頃から雨の予報です。\n屋外作業の調整をご検討ください。",en:"Rain is forecast from around 3 PM.\nPlease adjust outdoor work accordingly."},t:"15:30",g:"today",u:true},
+  {f:{ja:"資材業者",en:"Supplier"},c:P[4],s:{ja:"資材搬入の確定連絡",en:"Material delivery confirmed"},p:{ja:"10時着で手配しました。",en:"Arranged to arrive at 10."},b:{ja:"鉄筋の搬入を10時着で手配しました。\n受け入れ準備をお願いします。",en:"Rebar delivery is arranged to arrive at 10.\nPlease prepare to receive it."},t:"14:00",g:"today",u:false},
+  {f:{ja:"安全管理",en:"Safety"},c:P[9],s:{ja:"安全朝礼の記録",en:"Safety briefing record"},p:{ja:"本日の朝礼記録です。",en:"Today's morning briefing record."},b:{ja:"本日の安全朝礼の記録を共有します。\n全員出席を確認しました。",en:"Sharing today's safety briefing record.\nAll members confirmed present."},t:"08:30",g:"yest",u:false},
+  {f:{ja:"元請",en:"GC"},c:P[2],s:{ja:"工程表の更新",en:"Schedule update"},p:{ja:"工程表を更新しました。",en:"The schedule has been updated."},b:{ja:"最新の工程表を更新しました。\n来週の予定をご確認ください。",en:"The latest schedule has been updated.\nPlease check next week's plan."},t:"17:40",g:"yest",u:false},
+  {f:{ja:"田中",en:"Tanaka"},c:P[1],s:{ja:"重機点検の報告",en:"Machinery inspection"},p:{ja:"重機の点検が完了しました。",en:"Heavy machinery inspection done."},b:{ja:"重機の点検が完了しました。\n異常はありませんでした。",en:"Heavy machinery inspection is complete.\nNo issues found."},t:"09:10",g:"yest",u:false},
+  {f:{ja:"高橋",en:"Takahashi"},c:P[3],s:{ja:"進捗写真の共有依頼",en:"Request: progress photos"},p:{ja:"本日分の進捗写真を。",en:"Today's progress photos, please."},b:{ja:"本日分の進捗写真を共有いただけますか。\n報告書に使用します。",en:"Could you share today's progress photos?\nWe'll use them in the report."},t:"17:03",g:"today",u:true,in:true},
+  {f:{ja:"元請",en:"GC"},c:P[2],s:{ja:"明日の搬入時間の確認",en:"Tomorrow's delivery time"},p:{ja:"明日の資材搬入時間を確認。",en:"Confirming tomorrow's material delivery time."},b:{ja:"明日の資材搬入時間を確認させてください。\n午前で問題ないでしょうか。",en:"Let me confirm tomorrow's material delivery time.\nIs the morning okay?"},t:"17:07",g:"today",u:true,in:true},
+ ]},
+ {key:"의료·간호", q:{ja:"シフト",en:"shift"}, mails:[
+  {f:{ja:"高橋",en:"Takahashi"},c:P[3],s:{ja:"午後シフトの変更",en:"Afternoon shift change"},p:{ja:"15時から入れます。",en:"I can start at 3 PM."},b:{ja:"午後のシフト、15時から入れます。\n引き継ぎをお願いします。",en:"For the afternoon shift, I can start at 3 PM.\nPlease handle the handover."},t:"16:35",g:"today",u:false},
+  {f:{ja:"看護部",en:"Nursing Dept"},c:P[0],s:{ja:"勤務表の更新",en:"Roster updated"},p:{ja:"来月の勤務表を更新。",en:"Next month's roster updated."},b:{ja:"来月の勤務表を更新しました。\n希望休の反映をご確認ください。",en:"Next month's roster has been updated.\nPlease check that your requested days off are reflected."},t:"15:20",g:"today",u:true},
+  {f:{ja:"薬剤部",en:"Pharmacy"},c:P[4],s:{ja:"点滴の準備完了",en:"IV prepared"},p:{ja:"305号室の点滴を準備。",en:"IV for Room 305 is ready."},b:{ja:"305号室の点滴を準備しました。\n16時に交換予定です。",en:"The IV for Room 305 is prepared.\nScheduled to change at 4 PM."},t:"14:05",g:"today",u:false},
+  {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"患者経過の報告",en:"Patient update"},p:{ja:"301号室、安定しています。",en:"Room 301 is stable."},b:{ja:"301号室の患者さん、安定しています。\nバイタルも正常です。",en:"The patient in Room 301 is stable.\nVitals are normal."},t:"20:00",g:"yest",u:false},
+  {f:{ja:"事務局",en:"Admin"},c:P[9],s:{ja:"研修のご案内",en:"Training notice"},p:{ja:"来週の感染対策研修。",en:"Infection control training next week."},b:{ja:"来週、感染対策研修を実施します。\n出席登録をお願いします。",en:"We'll hold infection control training next week.\nPlease register your attendance."},t:"12:30",g:"yest",u:false},
+  {f:{ja:"田中",en:"Tanaka"},c:P[1],s:{ja:"申し送り事項",en:"Handover notes"},p:{ja:"夜勤の申し送りです。",en:"Night shift handover notes."},b:{ja:"夜勤の申し送り事項を共有します。\n記録に残しておきます。",en:"Sharing the night shift handover notes.\nI'll keep them in the records."},t:"07:00",g:"yest",u:false},
+  {f:{ja:"中村",en:"Nakamura"},c:P[2],s:{ja:"ご家族への説明依頼",en:"Family briefing request"},p:{ja:"301号室のご家族への説明を。",en:"Briefing for Room 301's family."},b:{ja:"301号室のご家族への説明をお願いできますか。\n本日中が望ましいです。",en:"Could you brief the family of Room 301?\nPreferably today."},t:"17:02",g:"today",u:true,in:true},
+  {f:{ja:"当直医",en:"On-call Doctor"},c:P[1],s:{ja:"指示変更の連絡",en:"Order change"},p:{ja:"投薬の指示を変更。",en:"Medication order changed."},b:{ja:"投薬の指示を一部変更しました。\n記録の更新をお願いします。",en:"I've changed part of the medication order.\nPlease update the records."},t:"17:06",g:"today",u:true,in:true},
+ ]},
+ {key:"소매·판매", q:{ja:"在庫",en:"stock"}, mails:[
+  {f:{ja:"中村",en:"Nakamura"},c:P[2],s:{ja:"新商品の入荷連絡",en:"New stock arrived"},p:{ja:"新商品が入荷しました。",en:"New products have arrived."},b:{ja:"新商品が入荷しました。\nバックヤードから補充をお願いします。",en:"New products have arrived.\nPlease restock them from the back."},t:"16:28",g:"today",u:false},
+  {f:{ja:"本部",en:"HQ"},c:P[0],s:{ja:"本日のセール案内",en:"Today's sale"},p:{ja:"全品10%オフを実施。",en:"10% off storewide today."},b:{ja:"本日は全品10%オフを実施します。\nディスプレイの変更をお願いします。",en:"We're running 10% off storewide today.\nPlease update the displays."},t:"15:10",g:"today",u:true},
+  {f:{ja:"POSシステム",en:"POS"},c:P[4],s:{ja:"午前の売上レポート",en:"AM sales report"},p:{ja:"午前売上は目標の6割。",en:"Morning sales at 60% of target."},b:{ja:"午前の売上は目標の6割に達しました。\nレジ2台稼働中です。",en:"Morning sales reached 60% of target.\nTwo registers are running."},t:"14:00",g:"today",u:false},
+  {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"在庫補充の報告",en:"Restock done"},p:{ja:"人気商品の補充完了。",en:"Popular items restocked."},b:{ja:"人気商品の補充が完了しました。\n1時間ごとに確認します。",en:"Restocking of popular items is complete.\nI'll check every hour."},t:"18:30",g:"yest",u:false},
+  {f:{ja:"物流センター",en:"Logistics"},c:P[9],s:{ja:"明日の入荷予定",en:"Tomorrow's delivery"},p:{ja:"明日午前に2便入荷。",en:"Two shipments tomorrow morning."},b:{ja:"明日午前に2便の入荷予定です。\n受け入れ準備をお願いします。",en:"Two shipments are scheduled for tomorrow morning.\nPlease prepare to receive them."},t:"11:20",g:"yest",u:false},
+  {f:{ja:"田中",en:"Tanaka"},c:P[1],s:{ja:"ディスプレイ変更の写真",en:"Display photos"},p:{ja:"変更後の売場写真です。",en:"Photos of the updated floor."},b:{ja:"変更後の売場写真を共有します。\nご確認ください。",en:"Sharing photos of the updated sales floor.\nPlease take a look."},t:"10:00",g:"yest",u:false},
+  {f:{ja:"本部",en:"HQ"},c:P[0],s:{ja:"夕方の増員について",en:"Evening staffing"},p:{ja:"夕方はレジを3台に。",en:"Open a third register this evening."},b:{ja:"夕方の混雑に備え、レジを3台に増やしましょう。\nシフト調整をお願いします。",en:"Let's open a third register for the evening rush.\nPlease adjust the shifts."},t:"17:02",g:"today",u:true,in:true},
+  {f:{ja:"顧客対応",en:"Customer Service"},c:P[1],s:{ja:"問い合わせ対応の依頼",en:"Customer inquiry"},p:{ja:"在庫に関する問い合わせ。",en:"Inquiry about stock."},b:{ja:"在庫に関するお問い合わせが入っています。\n対応をお願いします。",en:"There's a customer inquiry about stock.\nPlease handle it."},t:"17:05",g:"today",u:true,in:true},
+ ]},
+ {key:"제조·공장", q:{ja:"検品",en:"inspection"}, mails:[
+  {f:{ja:"伊藤",en:"Ito"},c:P[5],s:{ja:"ラインの稼働報告",en:"Line status"},p:{ja:"本日の目標は達成見込み。",en:"On track to hit today's target."},b:{ja:"本日のラインは順調です。\n目標は達成見込みです。",en:"The line is running smoothly today.\nWe're on track to hit the target."},t:"16:30",g:"today",u:false},
+  {f:{ja:"品質管理",en:"QC"},c:P[0],s:{ja:"検品結果の報告",en:"Inspection result"},p:{ja:"不良率は0.3%です。",en:"Defect rate is 0.3%."},b:{ja:"本日の検品結果です。\n不良率は0.3%、基準内に収まっています。",en:"Today's inspection result.\nDefect rate is 0.3%, within standard."},t:"15:25",g:"today",u:true},
+  {f:{ja:"資材部",en:"Materials"},c:P[4],s:{ja:"在庫状況の連絡",en:"Stock status"},p:{ja:"明日分まで確保済み。",en:"Secured through tomorrow."},b:{ja:"資材は明日分まで確保できています。\n追加発注は不要です。",en:"Materials are secured through tomorrow.\nNo additional order needed."},t:"14:10",g:"today",u:false},
+  {f:{ja:"設備保全",en:"Maintenance"},c:P[9],s:{ja:"定期点検の予定",en:"Scheduled maintenance"},p:{ja:"今週末に定期点検を。",en:"Maintenance this weekend."},b:{ja:"今週末に設備の定期点検を実施します。\n停止時間をご確認ください。",en:"We'll perform scheduled maintenance this weekend.\nPlease check the downtime."},t:"17:00",g:"yest",u:false},
+  {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"次ロットの段取り",en:"Next lot setup"},p:{ja:"次のロットの準備を。",en:"Preparing the next lot."},b:{ja:"次のロットの段取りを進めています。\n準備が整い次第ご連絡します。",en:"I'm setting up the next lot.\nI'll let you know once it's ready."},t:"13:40",g:"yest",u:false},
+  {f:{ja:"生産管理",en:"Planning"},c:P[2],s:{ja:"生産計画の更新",en:"Production plan"},p:{ja:"来週の生産計画です。",en:"Next week's production plan."},b:{ja:"来週の生産計画を更新しました。\n各ラインへの展開をお願いします。",en:"Next week's production plan has been updated.\nPlease roll it out to each line."},t:"09:50",g:"yest",u:false},
+  {f:{ja:"高橋",en:"Takahashi"},c:P[3],s:{ja:"温度異常の確認依頼",en:"Temperature check"},p:{ja:"第2ラインの温度を確認。",en:"Check the temp on Line 2."},b:{ja:"第2ラインの温度を確認いただけますか。\n念のための点検です。",en:"Could you check the temperature on Line 2?\nJust a precautionary check."},t:"17:03",g:"today",u:true,in:true},
+  {f:{ja:"品質管理",en:"QC"},c:P[0],s:{ja:"出荷前チェックの結果",en:"Pre-shipment check"},p:{ja:"出荷前チェック、問題なし。",en:"Pre-shipment check passed."},b:{ja:"出荷前チェックが完了しました。\n問題ありません。",en:"The pre-shipment check is complete.\nNo issues."},t:"17:06",g:"today",u:true,in:true},
+ ]},
+ {key:"물류·배송", q:{ja:"ルート",en:"route"}, mails:[
+  {f:{ja:"渡辺",en:"Watanabe"},c:P[6],s:{ja:"本日の配送ルート",en:"Today's routes"},p:{ja:"午前10件、午後8件です。",en:"10 in the morning, 8 in the afternoon."},b:{ja:"本日の配送ルートです。\n午前10件、午後8件で確定しています。",en:"Here are today's delivery routes.\n10 in the morning, 8 in the afternoon, confirmed."},t:"16:20",g:"today",u:false},
+  {f:{ja:"配車システム",en:"Dispatch"},c:P[0],s:{ja:"再配達の依頼",en:"Redelivery requests"},p:{ja:"再配達が2件入りました。",en:"2 redelivery requests came in."},b:{ja:"再配達の依頼が2件入りました。\n午後便に組み込んでください。",en:"Two redelivery requests came in.\nPlease add them to the afternoon run."},t:"15:30",g:"today",u:true},
+  {f:{ja:"倉庫",en:"Warehouse"},c:P[4],s:{ja:"冷蔵品の積み込み完了",en:"Refrigerated loaded"},p:{ja:"温度管理も確認済み。",en:"Temperature control checked."},b:{ja:"冷蔵品の積み込みが完了しました。\n温度管理も確認済みです。",en:"The refrigerated cargo has been loaded.\nTemperature control checked."},t:"14:05",g:"today",u:false},
+  {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"車両点検の報告",en:"Vehicle check"},p:{ja:"出発前の点検完了。",en:"Pre-departure check done."},b:{ja:"出発前の車両点検が完了しました。\n問題ありません。",en:"The pre-departure vehicle check is complete.\nNo issues."},t:"07:30",g:"yest",u:false},
+  {f:{ja:"交通情報",en:"Traffic"},c:P[9],s:{ja:"渋滞情報の共有",en:"Traffic update"},p:{ja:"環状線で渋滞が発生。",en:"Congestion on the loop line."},b:{ja:"環状線で渋滞が発生しています。\nルートの調整をご検討ください。",en:"There's congestion on the loop line.\nPlease consider adjusting the route."},t:"16:40",g:"yest",u:false},
+  {f:{ja:"田中",en:"Tanaka"},c:P[1],s:{ja:"到着予定の更新",en:"ETA update"},p:{ja:"アプリで随時更新します。",en:"Updating ETAs in the app."},b:{ja:"各便の到着予定をアプリで随時更新します。\nご確認ください。",en:"I'll keep ETAs updated in the app.\nPlease check there."},t:"09:00",g:"yest",u:false},
+  {f:{ja:"中村",en:"Nakamura"},c:P[2],s:{ja:"追加集荷の依頼",en:"Extra pickup"},p:{ja:"午後に追加集荷が1件。",en:"One extra pickup this afternoon."},b:{ja:"午後に追加の集荷が1件入りました。\n対応可能でしょうか。",en:"An extra pickup came in for this afternoon.\nCan you handle it?"},t:"17:02",g:"today",u:true,in:true},
+  {f:{ja:"配車システム",en:"Dispatch"},c:P[0],s:{ja:"ルート最適化の提案",en:"Route optimization"},p:{ja:"最適化ルートを提案。",en:"Proposing an optimized route."},b:{ja:"本日のルートの最適化案を提案します。\n約20分短縮できます。",en:"Here's an optimized route proposal for today.\nIt can save about 20 minutes."},t:"17:05",g:"today",u:true,in:true},
+ ]},
+ {key:"교육·학습", q:{ja:"テスト",en:"test"}, mails:[
+  {f:{ja:"小林",en:"Kobayashi"},c:P[7],s:{ja:"来週の授業準備",en:"Next week prep"},p:{ja:"資料は明日までに共有。",en:"Materials by tomorrow."},b:{ja:"来週の授業準備は順調です。\n資料は明日までに共有します。",en:"Prep for next week's classes is going well.\nI'll share the materials by tomorrow."},t:"16:35",g:"today",u:false},
+  {f:{ja:"教務部",en:"Academic Office"},c:P[0],s:{ja:"時間割の変更",en:"Timetable change"},p:{ja:"金曜の時間割を変更。",en:"Friday's timetable changed."},b:{ja:"金曜の時間割を一部変更しました。\nご確認をお願いします。",en:"We've changed part of Friday's timetable.\nPlease review."},t:"15:15",g:"today",u:true},
+  {f:{ja:"印刷室",en:"Print Room"},c:P[4],s:{ja:"プリント印刷の完了",en:"Handouts printed"},p:{ja:"40部印刷しました。",en:"Printed 40 copies."},b:{ja:"ご依頼のプリント40部の印刷が完了しました。\nお受け取りください。",en:"The 40 copies you requested are printed.\nPlease pick them up."},t:"14:00",g:"today",u:false},
+  {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"テスト範囲の確定",en:"Test scope"},p:{ja:"第3章までで確定。",en:"Finalized through Chapter 3."},b:{ja:"テスト範囲は第3章までで確定しました。\n生徒へ周知します。",en:"The test scope is finalized through Chapter 3.\nI'll inform the students."},t:"18:00",g:"yest",u:false},
+  {f:{ja:"保護者会",en:"PTA"},c:P[9],s:{ja:"面談日程の調整",en:"Meeting scheduling"},p:{ja:"面談の日程候補です。",en:"Proposed meeting dates."},b:{ja:"保護者面談の日程候補を送ります。\nご都合をお知らせください。",en:"Sending proposed dates for parent meetings.\nPlease let us know your availability."},t:"12:00",g:"yest",u:false},
+  {f:{ja:"田中",en:"Tanaka"},c:P[1],s:{ja:"お便りの下書き",en:"Newsletter draft"},p:{ja:"下書きを作成中です。",en:"Drafting it now."},b:{ja:"今月のお便りの下書きを作成中です。\n夕方までに共有します。",en:"I'm drafting this month's newsletter.\nI'll share it by this evening."},t:"10:30",g:"yest",u:false},
+  {f:{ja:"教務部",en:"Academic Office"},c:P[0],s:{ja:"研究授業のご案内",en:"Open class notice"},p:{ja:"来月の研究授業について。",en:"About next month's open class."},b:{ja:"来月の研究授業の日程が決まりました。\n指導案の提出をお願いします。",en:"The date for next month's open class is set.\nPlease submit your lesson plan."},t:"17:02",g:"today",u:true,in:true},
+  {f:{ja:"高橋",en:"Takahashi"},c:P[3],s:{ja:"補習の希望者リスト",en:"Supplementary list"},p:{ja:"補習希望者をまとめました。",en:"Compiled the supplementary list."},b:{ja:"補習の希望者リストをまとめました。\nご確認ください。",en:"I've compiled the list of students for supplementary lessons.\nPlease review."},t:"17:06",g:"today",u:true,in:true},
+ ]},
+ {key:"영업·마케팅", q:{ja:"キャンペーン",en:"campaign"}, mails:[
+  {f:{ja:"山田",en:"Yamada"},c:P[8],s:{ja:"来月のキャンペーン案",en:"Next campaign plan"},p:{ja:"ご確認をお願いします。",en:"Please review."},b:{ja:"来月のキャンペーン案をまとめました。\nご確認をお願いします。",en:"I've put together next month's campaign plan.\nPlease review."},t:"16:40",g:"today",u:false},
+  {f:{ja:"マーケ部",en:"Marketing"},c:P[0],s:{ja:"提案資料のドラフト",en:"Proposal draft"},p:{ja:"先方への提案資料です。",en:"Proposal deck for the client."},b:{ja:"先方への提案資料のドラフトです。\n明日のMTGで詰めましょう。",en:"Here's the draft proposal deck for the client.\nLet's finalize it at tomorrow's meeting."},t:"15:35",g:"today",u:true},
+  {f:{ja:"CRM/System",en:"CRM/System"},c:P[4],s:{ja:"商談リマインド",en:"Deal reminder"},p:{ja:"明日10時に商談予定。",en:"Meeting at 10 AM tomorrow."},b:{ja:"明日10時にA社との商談が予定されています。\n準備をお願いします。",en:"A meeting with Company A is scheduled for 10 AM tomorrow.\nPlease prepare."},t:"14:20",g:"today",u:false},
+  {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"先月の実績レポート",en:"Last month report"},p:{ja:"前年比120%で着地。",en:"Landed at 120% YoY."},b:{ja:"先月の営業実績は前年比120%で着地しました。\n詳細は添付の通りです。",en:"Last month's sales landed at 120% year over year.\nDetails are attached."},t:"19:00",g:"yest",u:false},
+  {f:{ja:"田中",en:"Tanaka"},c:P[1],s:{ja:"顧客リストの更新",en:"Customer list"},p:{ja:"30代の既存顧客を。",en:"Existing customers in their 30s."},b:{ja:"ターゲットとなる30代の既存顧客リストを更新しました。\nご確認ください。",en:"I've updated the list of target existing customers in their 30s.\nPlease review."},t:"13:10",g:"yest",u:false},
+  {f:{ja:"経理部",en:"Finance"},c:P[9],s:{ja:"経費精算のお願い",en:"Expense reminder"},p:{ja:"今月の経費精算を。",en:"This month's expense report."},b:{ja:"今月の経費精算の締切は明日です。\n提出をお願いします。",en:"The deadline for this month's expense report is tomorrow.\nPlease submit."},t:"10:00",g:"yest",u:false},
+  {f:{ja:"高橋",en:"Takahashi"},c:P[3],s:{ja:"予算配分の確認",en:"Budget allocation"},p:{ja:"予算感を共有ください。",en:"Please share the budget range."},b:{ja:"キャンペーンの予算配分について確認させてください。\n共有をお願いします。",en:"Let me confirm the budget allocation for the campaign.\nPlease share."},t:"17:02",g:"today",u:true,in:true},
+  {f:{ja:"マーケ部",en:"Marketing"},c:P[0],s:{ja:"広告クリエイティブ完成",en:"Ad creative ready"},p:{ja:"新しいバナーが完成。",en:"New banner is ready."},b:{ja:"新しい広告バナーが完成しました。\nご確認のうえ展開しましょう。",en:"The new ad banner is ready.\nLet's review and roll it out."},t:"17:06",g:"today",u:true,in:true},
+ ]},
+];
+
+/* ===== 상태 ===== */
+let dev="pc", lang="ja", cur=0, token=0, work=[], openId=null, filter="";
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const initial=()=>scenarios[cur].mails.filter(m=>!m.in).map((m,i)=>({...m,id:m.s.ja+i,shown:true,unread:m.u}));
+const queue=()=>scenarios[cur].mails.filter(m=>m.in).map((m,i)=>({...m,id:"q"+i,shown:true,unread:true}));
+let pending=[];
+
+/* ===== 칩 ===== */
+scenarios.forEach((s,i)=>{
+  const c=document.createElement("button");
+  c.className="chip"+(i===0?" active":"");c.textContent=s.key;
+  c.onclick=()=>{cur=i;[...$("chips").children].forEach((x,j)=>x.classList.toggle("active",j===i));play();};
+  $("chips").appendChild(c);
+});
+
+/* ===== 정적 UI (네비/리본/탭/하단) ===== */
+function paintStatic(){
+  const T=UI[lang];
+  // tabs + command bar
+  const tb=T.tabs;
+  $("pcRibbon").innerHTML=[["home",1],["view",0],["help",0]]
+    .map(([k,on])=>`<span class="rt${on?" on":""}">${tb[k]}</span>`).join("");
+  $("pcCmd").innerHTML=`
+    <span class="ci"><span class="g">✉</span>${T.newbtn}</span><span class="sep"></span>
+    <span class="ci"><span class="g">🗑</span>${T.del}</span>
+    <span class="ci"><span class="g">🗄</span>${T.arch}</span>
+    <span class="ci"><span class="g">📁</span>${T.move}</span><span class="sep"></span>
+    <span class="ci"><span class="g">↩</span>${T.reply}</span>
+    <span class="ci"><span class="g">↪</span>${T.replyall}</span>
+    <span class="ci"><span class="g">➡</span>${T.forward}</span>`;
+  // nav
+  $("pcNav").innerHTML=`
+    <button class="newbtn">✉ ${T.newbtn}</button>
+    <div class="navsec">★ ${T.favorites}</div>
+    <div class="nav on"><span class="ico">📥</span>${T.inbox}<span class="cnt" id="favInbox"></span></div>
+    <div class="nav"><span class="ico">💳</span>${T.expenses}</div>
+    <div class="nav"><span class="ico">📄</span>${T.invoices}</div>
+    <div class="navsec">katyreid@outlook.com</div>
+    <div class="nav on"><span class="ico">📥</span>${T.inbox}<span class="cnt" id="navInbox"></span></div>
+    <div class="nav"><span class="ico">📝</span>${T.drafts}</div>
+    <div class="nav"><span class="ico">📤</span>${T.sent}</div>
+    <div class="nav"><span class="ico">🗑</span>${T.deleted}</div>
+    <div class="nav"><span class="ico">🚫</span>${T.junk}</div>
+    <div class="nav"><span class="ico">🗄</span>${T.archive}</div>`;
+  $("pcFocused").textContent=T.focused;$("pcOther").textContent=T.other;
+  $("pcSearch").placeholder=T.search;$("mbSearch").placeholder=T.search;
+  $("mbTitle").textContent=T.inbox;$("mbFocused").textContent=T.focused;$("mbOther").textContent=T.other;
+  $("toastTt").textContent=T.newmail;
+  const bi=["📧","📅","👥","⚙"];
+  $("mbBottom").innerHTML=T.bottom.map((b,i)=>`<div class="bn${i===0?" on":""}"><span class="bi">${bi[i]}</span>${b}</div>`).join("");
+}
+
+/* ===== 렌더 ===== */
+function visible(){
+  const f=filter.trim().toLowerCase();
+  return work.filter(m=>m.shown && (!f ||
+    (m.f[lang]+m.s[lang]+m.p[lang]).toLowerCase().includes(f)));
+}
+function av(m){return [...m.f[lang]][0];}
+
+function renderList(){
+  const T=UI[lang], list=visible();
+  // counts
+  const cnt=work.filter(m=>m.shown&&m.unread).length;
+  if($("favInbox"))$("favInbox").textContent=cnt;
+  if($("navInbox"))$("navInbox").textContent=cnt;
+  // PC
+  let html="",g=null;
+  list.forEach(m=>{
+    if(m.g!==g){g=m.g;html+=`<div class="grphd">${g==="today"?T.today:T.yest}</div>`;}
+    html+=`<div class="mailrow${m.unread?" unread":""}${m.id===openId?" sel":""}" data-id="${m.id}">
+      ${m.unread?'<span class="udot"></span>':''}
+      <div class="av" style="background:${m.c}">${av(m)}</div>
+      <div class="mid"><div class="l1"><span class="from">${m.f[lang]}</span><span class="time">${m.t}</span></div>
+      <div class="subj">${m.s[lang]}</div><div class="prev">${m.p[lang]}</div></div></div>`;
+  });
+  $("pcList").innerHTML=html;
+  $("pcList").querySelectorAll(".mailrow").forEach(r=>r.onclick=()=>openMail(r.dataset.id));
+  // Mobile
+  let mh="";g=null;
+  list.forEach(m=>{
+    if(m.g!==g){g=m.g;mh+=`<div class="mgrp">${g==="today"?T.today:T.yest}</div>`;}
+    mh+=`<div class="mrow${m.unread?" unread":""}" data-id="${m.id}">
+      ${m.unread?'<span class="udot"></span>':''}
+      <div class="av" style="background:${m.c}">${av(m)}</div>
+      <div class="mid"><div class="l1"><span class="from">${m.f[lang]}</span><span class="time">${m.t}</span></div>
+      <div class="subj">${m.s[lang]}</div><div class="prev">${m.p[lang]}</div></div></div>`;
+  });
+  $("mbList").innerHTML=mh;
+  $("mbList").querySelectorAll(".mrow").forEach(r=>r.onclick=()=>openMail(r.dataset.id));
+}
+
+function emptyRead(){
+  $("pcRead").innerHTML=`<div class="empty"><div class="ic">✉</div><div>${UI[lang].empty}</div></div>`;
+}
+function openMail(id){
+  const m=work.find(x=>x.id===id); if(!m)return;
+  m.unread=false; openId=id;
+  const T=UI[lang];
+  renderList();
+  // PC reading pane
+  $("pcRead").innerHTML=`<div class="rd">
+    <div class="rtools"><span class="sp"></span><span class="ti">↩</span><span class="ti">↪</span><span class="ti">➡</span><span class="ti">🗑</span><span class="ti">🚩</span><span class="ti">⋯</span></div>
+    <div class="rsubj">${m.s[lang]}</div>
+    <div class="rhead"><div class="av" style="background:${m.c}">${av(m)}</div>
+      <div class="who"><div class="nm">${m.f[lang]}</div><div class="to">${T.to}</div></div>
+      <div class="rtime">${m.t}</div></div>
+    <div class="rbody">${m.b[lang]}</div>
+    <div class="ract"><button class="ab">↩ ${T.reply}</button><button class="ab">↩ ${T.replyall}</button><button class="ab">➡ ${T.forward}</button></div>
+  </div>`;
+  // Mobile reading
+  $("mbRead").innerHTML=`
+    <div class="mr-top"><span class="bk" id="mbBack">‹</span><span class="sp"></span><span class="mic">↩</span><span class="mic">🗑</span><span class="mic">⋯</span></div>
+    <div class="mr-subj">${m.s[lang]}</div>
+    <div class="mr-from"><div class="av" style="background:${m.c}">${av(m)}</div>
+      <div><div class="nm">${m.f[lang]}</div><div class="to">${T.to}</div></div></div>
+    <div class="mr-body">${m.b[lang]}</div>
+    <div class="mr-act"><button class="ab">↩ ${T.reply}</button><button class="ab">↩ ${T.replyall}</button><button class="ab">➡ ${T.forward}</button></div>`;
+  $("mbBack").onclick=closeMail;
+  if(dev==="mobile")$("mbRead").classList.add("open");
+}
+function closeMail(){
+  openId=null; renderList(); emptyRead(); $("mbRead").classList.remove("open");
+}
+
+/* 토스트 */
+async function toast(m){
+  $("toastFrom").textContent=m.f[lang];$("toastSub").textContent=m.s[lang];
+  $("pcToast").classList.add("show");
+  await sleep(2600); $("pcToast").classList.remove("show");
+}
+
+/* 검색 타이핑 */
+async function typeSearch(term){
+  const box = dev==="pc"?$("pcSearch"):$("mbSearch");
+  for(let i=1;i<=term.length;i++){
+    if(box._t!==undefined && box._t!==token)return;
+    filter=term.slice(0,i); box.value=filter; renderList();
+    await sleep(160);
+  }
+}
+async function clearSearch(){
+  filter=""; $("pcSearch").value="";$("mbSearch").value=""; renderList();
+}
+
+/* ===== 자동 시나리오 ===== */
+async function play(){
+  const t=++token;
+  closeMail(); filter=""; $("pcSearch").value="";$("mbSearch").value="";
+  work=initial(); pending=queue(); paintStatic(); renderList(); emptyRead();
+  const scrollTop=()=>{ $("pcList").scrollTop=0; $("mbList").scrollTop=0; };
+  await sleep(900); if(t!==token)return;
+  // 1) 새 메일 2건 도착
+  for(const nm of pending){
+    if(t!==token)return;
+    work.unshift({...nm}); renderList(); scrollTop(); toast(nm);
+    await sleep(2400);
+  }
+  if(t!==token)return;
+  // 2) 첫 메일 열기 → 닫기
+  let target=work.find(m=>m.unread)||work[0];
+  openMail(target.id); await sleep(2800); if(t!==token)return;
+  closeMail(); await sleep(700); if(t!==token)return;
+  // 3) 다른 메일 열기 → 닫기
+  let target2=work.find(m=>m.unread&&m.id!==target.id)||work[2];
+  if(target2){openMail(target2.id); await sleep(2800); if(t!==token)return; closeMail(); await sleep(700);}
+  if(t!==token)return;
+  // 4) 검색
+  await typeSearch(scenarios[cur].q[lang]); if(t!==token)return;
+  await sleep(2200); if(t!==token)return;
+  await clearSearch();
+}
+
+/* ===== 수동 검색 입력 ===== */
+$("pcSearch").addEventListener("input",e=>{filter=e.target.value;renderList();$("mbSearch").value=e.target.value;});
+$("mbSearch").addEventListener("input",e=>{filter=e.target.value;renderList();$("pcSearch").value=e.target.value;});
+
+/* ===== 컨트롤 ===== */
+function applyDevice(){
+  $("pcwin").style.display = dev==="pc"?"flex":"none";
+  $("phone").style.display = dev==="pc"?"none":"block";
+  $("ratioRow").style.display = dev==="pc"?"none":"flex";
+}
+document.querySelectorAll(".btn.dev").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".btn.dev").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); dev=b.dataset.dev; applyDevice(); play();
+}));
+document.querySelectorAll(".btn.lang").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".btn.lang").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); lang=b.dataset.lang; document.documentElement.lang=lang; play();
+}));
+$("mockup").addEventListener("change",e=>{
+  $("pcwin").classList.toggle("flat",!e.target.checked);
+  $("phone").classList.toggle("flat",!e.target.checked);
+});
+document.querySelectorAll(".btn.ratio").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".btn.ratio").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); $("phone").classList.toggle("r34",b.dataset.ratio==="34");
+}));
+$("replay").onclick=play;
+
+applyDevice(); play();
+</script>
+</body>
+</html>
