@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINE風 メッセンジャー デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body{
+    font-family:"Noto Sans JP",sans-serif;
+    background:#202730;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:24px;
+    padding:32px 16px 40px;
+  }
+
+  /* ===== 조작 패널 (운영자용 · 한국어 · 녹화 시 크롭) ===== */
+  .controls{
+    width:280px;
+    flex-shrink:0;
+    position:fixed;
+    left:20px;
+    top:32px;
+    background:#2b333d;
+    border:1px solid #3b4654;
+    border-radius:14px;
+    padding:14px 16px;
+    color:#cdd6e0;
+  }
+  .row2{gap:8px;}
+  .row2 span[style]{margin-left:0!important;}
+  .controls h2{font-size:13px;font-weight:600;color:#8ea3b8;margin-bottom:10px;letter-spacing:.02em;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .chip{
+    border:1px solid #45525f;background:#333d49;color:#c7d2dd;
+    font-size:13px;padding:7px 13px;border-radius:999px;cursor:pointer;
+    transition:.15s;white-space:nowrap;
+  }
+  .chip:hover{background:#3d4956;}
+  .chip.active{background:#06c755;border-color:#06c755;color:#fff;font-weight:600;}
+  .row2{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+  .btn{
+    border:none;background:#3f4b58;color:#dfe7ef;font-size:13px;
+    padding:8px 14px;border-radius:8px;cursor:pointer;transition:.15s;
+  }
+  .btn:hover{background:#4a5867;}
+  .btn.ratio{padding:8px 12px;}
+  .btn.ratio.active{background:#06c755;color:#fff;font-weight:600;}
+  .toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:#aebccb;cursor:pointer;user-select:none;}
+  .toggle input{width:16px;height:16px;accent-color:#06c755;cursor:pointer;}
+
+  /* ===== 휴대폰 프레임 ===== */
+  .phone{
+    width:390px;
+    height:693px;          /* 9:16 (390 × 16/9) */
+    background:#000;
+    border-radius:44px;
+    padding:11px;
+    overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.55), 0 0 0 2px #2c2c2c;
+    transition:.2s;
+  }
+  /* 비율 3:4 (390 × 4/3) */
+  .phone.r34{height:520px;}
+  /* 목업 OFF: 깔끔한 사각형 화면만 */
+  .phone.bare{
+    background:none;border-radius:0;padding:0;box-shadow:none;
+  }
+  .phone.bare .screen{border-radius:0;}
+
+  .screen{
+    width:100%;height:100%;
+    border-radius:34px;
+    overflow:hidden;
+    position:relative;
+    display:flex;flex-direction:column;
+    background:linear-gradient(180deg,#7fb9e0 0%,#9ccbe8 38%,#bcdcf0 100%);
+  }
+  .screen::before{
+    content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(120px 50px at 18% 30%,rgba(255,255,255,.55),transparent 70%),
+      radial-gradient(160px 60px at 80% 18%,rgba(255,255,255,.45),transparent 70%),
+      radial-gradient(140px 55px at 60% 62%,rgba(255,255,255,.30),transparent 70%),
+      radial-gradient(180px 70px at 25% 85%,rgba(255,255,255,.35),transparent 70%);
+  }
+
+  /* 상태바 */
+  .statusbar{
+    position:relative;z-index:2;
+    height:26px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;font-size:12px;color:#1d2730;font-weight:600;
+  }
+  .statusbar .right{display:flex;align-items:center;gap:5px;}
+  .statusbar .batt{width:22px;height:11px;border:1px solid #1d2730;border-radius:3px;position:relative;padding:1px;}
+  .statusbar .batt::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:5px;background:#1d2730;border-radius:0 1px 1px 0;}
+  .statusbar .batt i{display:block;width:80%;height:100%;background:#1d2730;border-radius:1px;}
+
+  /* 헤더 */
+  .header{
+    position:relative;z-index:2;
+    height:48px;background:#3a4654;
+    display:flex;align-items:center;padding:0 12px;color:#fff;gap:6px;
+  }
+  .header .back{font-size:20px;line-height:1;}
+  .header .cnt{font-size:14px;color:#cfd6dd;margin-right:2px;}
+  .header .title{flex:1;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:600;}
+  .header .shield{
+    width:18px;height:20px;background:#3aaa35;
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;
+    clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);
+  }
+  .header .ic{font-size:18px;opacity:.95;padding:0 4px;display:flex;align-items:center;}
+
+  /* 채팅 영역 */
+  .chat{
+    position:relative;z-index:1;flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth;
+    padding:14px 12px 6px;display:flex;flex-direction:column;gap:10px;
+  }
+  .chat::-webkit-scrollbar{display:none;}
+
+  .datepill{align-self:center;background:rgba(90,105,120,.72);color:#fff;font-size:12px;
+    padding:4px 14px;border-radius:999px;margin:2px 0 6px;}
+
+  .msg{display:flex;align-items:flex-start;gap:7px;max-width:88%;animation:pop .28s ease;}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96);}to{opacity:1;transform:none;}}
+  .msg.in{align-self:flex-start;}
+  .msg.out{align-self:flex-end;flex-direction:row-reverse;}
+
+  .avatar{width:38px;height:38px;border-radius:50%;background:#7c5fd6;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:700;
+    box-shadow:inset 0 -6px 10px rgba(0,0,0,.12);}
+
+  .bubble{position:relative;font-size:15px;line-height:1.3;font-weight:500;padding:8px 13px;border-radius:16px;
+    color:#14202b;word-break:break-word;max-width:230px;}
+  .msg.in .bubble{background:#fff;border-top-left-radius:5px;}
+  .msg.out .bubble{background:#7ec74d;border-top-right-radius:5px;}
+  .msg.in .bubble::before{content:"";position:absolute;left:-5px;top:0;border:6px solid transparent;border-top-color:#fff;border-right:0;}
+  .msg.out .bubble::before{content:"";position:absolute;right:-5px;top:0;border:6px solid transparent;border-top-color:#7ec74d;border-left:0;}
+
+  .meta{display:flex;flex-direction:column;justify-content:flex-end;align-self:flex-end;font-size:10.5px;color:#33424f;line-height:1.4;}
+  .msg.out .meta{align-items:flex-end;text-align:right;}
+  .msg.in .meta{align-items:flex-start;}
+  .meta .read{color:#3a4a57;font-weight:600;}
+
+  .typing .bubble{background:#fff;display:flex;gap:4px;padding:12px 14px;}
+  .typing .dot{width:7px;height:7px;border-radius:50%;background:#b8c2cc;animation:blink 1.2s infinite;}
+  .typing .dot:nth-child(2){animation-delay:.2s;}
+  .typing .dot:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,60%,100%{opacity:.3;}30%{opacity:1;}}
+
+  .inputbar{position:relative;z-index:2;height:54px;background:#f3f4f6;
+    display:flex;align-items:center;gap:9px;padding:0 12px;}
+  .inputbar .pic{font-size:22px;color:#7c8894;}
+  .inputbar .field{flex:1;height:34px;background:#fff;border-radius:18px;border:1px solid #e2e5e9;}
+  .inputbar .send{background:#4a8fd6;color:#fff;font-size:13px;font-weight:600;
+    padding:8px 14px;border-radius:8px;}
+</style>
+</head>
+<body>
+
+  <div class="controls">
+    <h2>직무/산업 선택 — 클릭하면 해당 예시 채팅이 처음부터 재생됩니다 (약 25~30초)</h2>
+    <div class="chips" id="chips"></div>
+    <div class="row2">
+      <button class="btn" id="replay">▶ 다시 재생</button>
+      <label class="toggle"><input type="checkbox" id="mockup" checked> 핸드폰 목업 표시</label>
+      <span style="font-size:13px;color:#aebccb;margin-left:6px;">비율</span>
+      <button class="btn ratio active" data-ratio="916">9:16</button>
+      <button class="btn ratio" data-ratio="34">3:4</button>
+      <span style="font-size:12px;color:#6f8194;margin-left:auto;">※ 목업 끄면 화면만 깔끔하게 녹화 가능</span>
+    </div>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="screen">
+      <div class="statusbar">
+        <span>17:08</span>
+        <span></span>
+        <span class="right"><span>100%</span><span class="batt"><i></i></span></span>
+      </div>
+      <div class="header">
+        <span class="back">‹</span><span class="cnt" id="hCnt">(2)</span>
+        <span class="title"><span class="shield">✓</span><span id="chatTitle">トーク</span></span>
+        <span class="ic">⌂</span>
+        <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </div>
+      <div class="chat" id="chat"></div>
+      <div class="inputbar">
+        <span class="pic">＋</span><span class="pic">☺</span>
+        <span class="field"></span>
+        <span class="send">送信</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== 산업별/직무별 일본어 대화 (각 14턴 · 약 25~30초) ===== */
+const scenarios = [
+  { key:"IT·개발", title:"開発チーム", avatar:"田", members:"(4)", messages:[
+    {side:"out", text:"お疲れさまです。本番リリースは予定通りで大丈夫でしょうか？", time:"17:01"},
+    {side:"in",  text:"はい、テストもすべて完了しました。", time:"17:01"},
+    {side:"in",  text:"18時にデプロイ予定です。", time:"17:02"},
+    {side:"out", text:"了解です。リリース手順書は共有済みですか？", time:"17:02"},
+    {side:"in",  text:"はい、ドキュメントに上げてあります。", time:"17:03"},
+    {side:"out", text:"確認しました。DBのバックアップも忘れずに。", time:"17:03"},
+    {side:"in",  text:"承知しました。今から取得します。", time:"17:04"},
+    {side:"out", text:"ありがとうございます。ロールバック手順も念のため。", time:"17:05"},
+    {side:"in",  text:"準備済みです。問題があれば即対応できます。", time:"17:05"},
+    {side:"out", text:"完璧です。監視ダッシュボードも共有しますね。", time:"17:06"},
+    {side:"in",  text:"助かります。リリース後30分は張り付きます。", time:"17:06"},
+    {side:"out", text:"よろしくお願いします。何かあればすぐ連絡を。", time:"17:07"},
+    {side:"in",  text:"承知しました。完了次第ご報告します。", time:"17:07"},
+    {side:"out", text:"お疲れさまです！頑張りましょう💪", time:"17:08"},
+  ]},
+  { key:"외식·매장", title:"店舗スタッフ", avatar:"佐", members:"(5)", messages:[
+    {side:"out", text:"本日のランチ、予約は何件入っていますか？", time:"17:01"},
+    {side:"in",  text:"12時台で8件、13時台で5件です。", time:"17:01"},
+    {side:"out", text:"ありがとうございます。混みそうですね。", time:"17:02"},
+    {side:"out", text:"ホールの人員、追加で1名お願いできますか？", time:"17:02"},
+    {side:"in",  text:"はい、田中さんに声をかけておきます。", time:"17:03"},
+    {side:"out", text:"助かります。仕込みの状況はどうですか？", time:"17:03"},
+    {side:"in",  text:"順調です。あと30分で完了します。", time:"17:04"},
+    {side:"out", text:"了解です。本日のおすすめは何にしますか？", time:"17:04"},
+    {side:"in",  text:"季節限定の和風パスタを推していきます。", time:"17:05"},
+    {side:"out", text:"いいですね！黒板メニューも更新お願いします。", time:"17:05"},
+    {side:"in",  text:"はい、開店前に書き換えておきます。", time:"17:06"},
+    {side:"out", text:"ドリンクの在庫も確認しておいてください。", time:"17:06"},
+    {side:"in",  text:"確認しました。アイスコーヒー以外は十分です。", time:"17:07"},
+    {side:"out", text:"承知です。発注しておきますね。よろしく！", time:"17:08"},
+  ]},
+  { key:"건설·현장", title:"現場管理", avatar:"鈴", members:"(6)", messages:[
+    {side:"out", text:"本日の現場、天候はいかがですか？", time:"17:01"},
+    {side:"in",  text:"午前は晴れ、午後から雨の予報です。", time:"17:01"},
+    {side:"out", text:"では基礎工事を午前中に終わらせましょう。", time:"17:02"},
+    {side:"in",  text:"了解です。安全第一で進めます。", time:"17:02"},
+    {side:"out", text:"資材の搬入時間も確認しておいてください。", time:"17:03"},
+    {side:"in",  text:"はい、10時着で手配済みです。", time:"17:03"},
+    {side:"out", text:"作業員の人数は足りていますか？", time:"17:04"},
+    {side:"in",  text:"本日は8名、予定通りです。", time:"17:04"},
+    {side:"out", text:"了解。重機の点検も済ませておいてください。", time:"17:05"},
+    {side:"in",  text:"始業前にチェック完了しています。", time:"17:05"},
+    {side:"out", text:"さすがです。安全朝礼は8時からで。", time:"17:06"},
+    {side:"in",  text:"承知しました。全員に周知済みです。", time:"17:06"},
+    {side:"out", text:"完璧です。写真で進捗を共有お願いします。", time:"17:07"},
+    {side:"in",  text:"承知しました。後ほど送ります。", time:"17:08"},
+  ]},
+  { key:"의료·간호", title:"看護シフト", avatar:"高", members:"(3)", messages:[
+    {side:"out", text:"午後のシフト、変更は可能でしょうか？", time:"17:01"},
+    {side:"in",  text:"大丈夫です。15時から入れます。", time:"17:01"},
+    {side:"out", text:"助かります。引き継ぎをお願いします。", time:"17:02"},
+    {side:"in",  text:"承知しました。記録に残しておきます。", time:"17:02"},
+    {side:"out", text:"301号室の患者さん、経過はいかがですか？", time:"17:03"},
+    {side:"in",  text:"安定しています。バイタルも正常です。", time:"17:03"},
+    {side:"out", text:"ありがとうございます。安心しました。", time:"17:04"},
+    {side:"out", text:"305号室の点滴の時間も確認お願いします。", time:"17:04"},
+    {side:"in",  text:"16時に交換予定です。準備済みです。", time:"17:05"},
+    {side:"out", text:"了解です。ご家族への説明は終わりましたか？", time:"17:05"},
+    {side:"in",  text:"はい、先ほど対応しました。", time:"17:06"},
+    {side:"out", text:"丁寧な対応ありがとうございます。", time:"17:06"},
+    {side:"in",  text:"とんでもないです。何かあればすぐ連絡します。", time:"17:07"},
+    {side:"out", text:"よろしくお願いします。お疲れさまです。", time:"17:08"},
+  ]},
+  { key:"소매·판매", title:"販売フロア", avatar:"中", members:"(4)", messages:[
+    {side:"out", text:"新商品の在庫、補充をお願いできますか？", time:"17:01"},
+    {side:"in",  text:"はい、バックヤードから出しておきます。", time:"17:01"},
+    {side:"out", text:"ディスプレイの変更もお願いします。", time:"17:02"},
+    {side:"in",  text:"了解しました。15分ほどで完了します。", time:"17:02"},
+    {side:"out", text:"本日のセール、反応はどうですか？", time:"17:03"},
+    {side:"in",  text:"good です。午前だけで目標の6割です。", time:"17:03"},
+    {side:"out", text:"素晴らしい！レジの混雑は大丈夫ですか？", time:"17:04"},
+    {side:"in",  text:"今は落ち着いています。2台稼働中です。", time:"17:04"},
+    {side:"out", text:"了解。夕方は3台に増やしましょう。", time:"17:05"},
+    {side:"in",  text:"はい、シフト調整しておきます。", time:"17:05"},
+    {side:"out", text:"人気商品の補充ペースも上げてください。", time:"17:06"},
+    {side:"in",  text:"承知しました。1時間ごとに確認します。", time:"17:06"},
+    {side:"out", text:"助かります。この調子でいきましょう！", time:"17:07"},
+    {side:"in",  text:"はい、頑張ります！", time:"17:08"},
+  ]},
+  { key:"제조·공장", title:"生産ライン", avatar:"伊", members:"(7)", messages:[
+    {side:"out", text:"ラインの稼働状況を教えてください。", time:"17:01"},
+    {side:"in",  text:"順調です。本日の目標は達成見込みです。", time:"17:01"},
+    {side:"out", text:"素晴らしいです。品質チェックもお願いします。", time:"17:02"},
+    {side:"in",  text:"はい、検品も問題ありません。", time:"17:02"},
+    {side:"out", text:"資材の在庫は足りていますか？", time:"17:03"},
+    {side:"in",  text:"明日分まで確保できています。", time:"17:03"},
+    {side:"out", text:"了解です。設備の異常などはありませんか？", time:"17:04"},
+    {side:"in",  text:"今のところ問題なしです。温度も正常です。", time:"17:04"},
+    {side:"out", text:"安心しました。不良率はどのくらいですか？", time:"17:05"},
+    {side:"in",  text:"0.3%です。基準内に収まっています。", time:"17:05"},
+    {side:"out", text:"優秀です。次のロットの段取りもお願いします。", time:"17:06"},
+    {side:"in",  text:"承知しました。準備を進めます。", time:"17:06"},
+    {side:"out", text:"いつもありがとうございます。助かります。", time:"17:07"},
+    {side:"in",  text:"引き続きよろしくお願いします！", time:"17:08"},
+  ]},
+  { key:"물류·배송", title:"配送センター", avatar:"渡", members:"(5)", messages:[
+    {side:"out", text:"本日の配送ルート、確認できましたか？", time:"17:01"},
+    {side:"in",  text:"はい、午前は10件、午後は8件です。", time:"17:01"},
+    {side:"out", text:"渋滞情報も後ほど共有しますね。", time:"17:02"},
+    {side:"in",  text:"ありがとうございます。助かります。", time:"17:02"},
+    {side:"out", text:"再配達の依頼が2件入っています。", time:"17:03"},
+    {side:"in",  text:"了解です。午後便に組み込みます。", time:"17:03"},
+    {side:"out", text:"冷蔵品の積み込みは済みましたか？", time:"17:04"},
+    {side:"in",  text:"はい、温度管理も確認済みです。", time:"17:04"},
+    {side:"out", text:"完璧です。車両の点検は大丈夫ですか？", time:"17:05"},
+    {side:"in",  text:"出発前にチェック済みです。問題ありません。", time:"17:05"},
+    {side:"out", text:"了解。到着予定はアプリで共有してください。", time:"17:06"},
+    {side:"in",  text:"承知しました。随時更新します。", time:"17:06"},
+    {side:"out", text:"よろしくお願いします。安全運転で！", time:"17:07"},
+    {side:"in",  text:"はい、気をつけて行ってきます。", time:"17:08"},
+  ]},
+  { key:"교육·학습", title:"教務チーム", avatar:"小", members:"(3)", messages:[
+    {side:"out", text:"来週の授業準備は進んでいますか？", time:"17:01"},
+    {side:"in",  text:"はい、資料は明日までに共有します。", time:"17:01"},
+    {side:"out", text:"よろしくお願いします。", time:"17:02"},
+    {side:"in",  text:"承知しました。確認後ご連絡します。", time:"17:02"},
+    {side:"out", text:"テスト範囲も決まりましたか？", time:"17:03"},
+    {side:"in",  text:"はい、第3章までで確定しました。", time:"17:03"},
+    {side:"out", text:"ありがとうございます。プリントの印刷は？", time:"17:04"},
+    {side:"in",  text:"40部、明日の朝までに用意します。", time:"17:04"},
+    {side:"out", text:"助かります。保護者への連絡も必要ですね。", time:"17:05"},
+    {side:"in",  text:"はい、お便りの下書きを作成中です。", time:"17:05"},
+    {side:"out", text:"確認しますので、できたら送ってください。", time:"17:06"},
+    {side:"in",  text:"承知しました。夕方までに共有します。", time:"17:06"},
+    {side:"out", text:"いつもありがとうございます。", time:"17:07"},
+    {side:"in",  text:"こちらこそ、よろしくお願いします。", time:"17:08"},
+  ]},
+  { key:"영업·마케팅", title:"営業チーム", avatar:"山", members:"(6)", messages:[
+    {side:"out", text:"来月のキャンペーン案、ご確認いただけましたか？", time:"17:01"},
+    {side:"in",  text:"はい、内容とても良いと思います。", time:"17:01"},
+    {side:"out", text:"ありがとうございます。では進めますね。", time:"17:02"},
+    {side:"in",  text:"お願いします。数字にも期待しています。", time:"17:02"},
+    {side:"out", text:"先方への提案資料も準備中です。", time:"17:03"},
+    {side:"in",  text:"いいですね。ターゲットは絞れましたか？", time:"17:03"},
+    {side:"out", text:"はい、30代の既存顧客を中心に考えています。", time:"17:04"},
+    {side:"in",  text:"なるほど。予算感も共有してください。", time:"17:04"},
+    {side:"out", text:"今期は前年比120%で見ています。", time:"17:05"},
+    {side:"in",  text:"了解です。チームにも展開しておきます。", time:"17:05"},
+    {side:"out", text:"助かります。明日のMTGで詳細を詰めましょう。", time:"17:06"},
+    {side:"in",  text:"承知しました。10時に会議室で。", time:"17:06"},
+    {side:"out", text:"よろしくお願いします！", time:"17:07"},
+    {side:"in",  text:"こちらこそ、頑張りましょう！", time:"17:08"},
+  ]},
+];
+
+const chat   = document.getElementById("chat");
+const chips  = document.getElementById("chips");
+const titleE = document.getElementById("chatTitle");
+const cntE   = document.getElementById("hCnt");
+const phone  = document.getElementById("phone");
+let current  = 0;
+let token    = 0;
+const sleep  = ms => new Promise(r=>setTimeout(r,ms));
+const scrollDown = () => chat.scrollTo({top:chat.scrollHeight,behavior:"smooth"});
+
+/* 칩 생성 */
+scenarios.forEach((s,i)=>{
+  const c=document.createElement("button");
+  c.className="chip"+(i===0?" active":"");
+  c.textContent=s.key;
+  c.onclick=()=>{ current=i; refreshChips(); play(); };
+  chips.appendChild(c);
+});
+function refreshChips(){
+  [...chips.children].forEach((c,i)=>c.classList.toggle("active",i===current));
+}
+
+function addDate(){
+  const d=document.createElement("div");
+  d.className="datepill"; d.textContent="今日";
+  chat.appendChild(d);
+}
+function addTyping(){
+  const r=document.createElement("div");
+  r.className="msg in typing";
+  r.innerHTML=`<div class="avatar">${scenarios[current].avatar}</div>
+    <div class="bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
+  chat.appendChild(r); scrollDown(); return r;
+}
+function addBubble(m){
+  const r=document.createElement("div");
+  r.className="msg "+m.side;
+  const av = m.side==="in" ? `<div class="avatar">${scenarios[current].avatar}</div>` : "";
+  const meta = m.side==="out"
+      ? `<div class="meta"><span class="read">既読</span><span>${m.time}</span></div>`
+      : `<div class="meta"><span>${m.time}</span></div>`;
+  r.innerHTML = `${av}<div class="bubble">${m.text}</div>${meta}`;
+  chat.appendChild(r); scrollDown(); return r;
+}
+
+async function play(){
+  const t=++token;
+  chat.innerHTML="";
+  const s=scenarios[current];
+  titleE.textContent=s.title;
+  cntE.textContent=s.members;
+  addDate();
+  await sleep(500);
+  for(const m of s.messages){
+    if(t!==token) return;
+    if(m.side==="in"){
+      const ty=addTyping();
+      await sleep(1100);
+      if(t!==token){ty.remove();return;}
+      ty.remove();
+      addBubble(m);
+    }else{
+      addBubble(m);
+    }
+    await sleep(850);
+  }
+}
+
+/* 핸드폰 목업 토글 */
+document.getElementById("mockup").addEventListener("change",e=>{
+  phone.classList.toggle("bare",!e.target.checked);
+});
+
+/* 비율 토글 (9:16 / 3:4) */
+document.querySelectorAll(".btn.ratio").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll(".btn.ratio").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    phone.classList.toggle("r34", b.dataset.ratio==="34");
+  });
+});
+document.getElementById("replay").onclick=play;
+play();
+</script>
+</body>
+</html>

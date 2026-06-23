@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メッセンジャー デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:"Noto Sans JP",sans-serif;background:#1b2129;color:#e8edf2;min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:34px;}
+  h1{font-size:24px;font-weight:700;letter-spacing:.02em;}
+  .sub{color:#8ea3b8;font-size:14px;margin-top:-22px;}
+  .cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;}
+  .card{width:260px;background:#232c36;border:1px solid #36424f;border-radius:16px;padding:26px 24px;
+    text-decoration:none;color:inherit;transition:.18s;display:flex;flex-direction:column;gap:12px;}
+  .card:hover{transform:translateY(-4px);border-color:#5a6b7d;box-shadow:0 14px 34px rgba(0,0,0,.4);}
+  .badge{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;}
+  .line{background:#06c755;}
+  .wa{background:#25d366;}
+  .card h2{font-size:18px;font-weight:700;}
+  .card p{font-size:13px;color:#9fb1c2;line-height:1.6;}
+  .go{margin-top:6px;color:#7fb2e6;font-size:13px;font-weight:600;}
+  footer{color:#5f7185;font-size:12px;text-align:center;line-height:1.7;}
+</style>
+</head>
+<body>
+  <h1>メッセンジャー デモ</h1>
+  <p class="sub">ブラウザで再生される会話デモ集</p>
+  <div class="cards">
+    <a class="card" href="line-messenger-jp.html">
+      <div class="badge line">💬</div>
+      <h2>LINE</h2>
+      <p>個人メッセンジャー風のトーク画面。業種・職務別の会話、9:16 / 3:4 切替。</p>
+      <span class="go">開く →</span>
+    </a>
+    <a class="card" href="whatsapp-jp.html">
+      <div class="badge wa">💬</div>
+      <h2>WhatsApp</h2>
+      <p>グループトーク風。業種・職務別の会話、日本語 / English、9:16 / 3:4 切替。</p>
+      <span class="go">開く →</span>
+    </a>
+  </div>
+  <footer>各デモは左側パネルで業種・言語・比率・モックアップを切り替えられます。<br>録画時はモックアップを OFF にして画面のみをキャプチャしてください。</footer>
+</body>
+</html>
