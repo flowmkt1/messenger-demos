@@ -23,6 +23,7 @@
   .card.line::before{background:#06c755;}
   .card.wa::before{background:#25d366;}
   .card.ol::before{background:#0f6cbd;}
+  .card.gm::before{background:#ea4335;}
   .card:hover{transform:translateY(-5px);border-color:#5a6b7d;box-shadow:0 18px 40px rgba(0,0,0,.45);}
 
   .top{display:flex;align-items:center;gap:14px;}
@@ -30,6 +31,7 @@
   .line .badge{background:#06c755;}
   .wa .badge{background:#25d366;}
   .ol .badge{background:#0f6cbd;}
+  .gm .badge{background:#fff;border:1px solid #eee;}
   .badge svg{width:34px;height:34px;}
   .top h2{font-size:21px;font-weight:700;}
   .top .tag{font-size:12.5px;color:#8ea3b8;margin-top:3px;}
@@ -43,6 +45,7 @@
   .card.line:hover .go{background:#06c755;border-color:#06c755;color:#06200f;}
   .card.wa:hover .go{background:#25d366;border-color:#25d366;color:#06200f;}
   .card.ol:hover .go{background:#0f6cbd;border-color:#0f6cbd;color:#fff;}
+  .card.gm:hover .go{background:#ea4335;border-color:#ea4335;color:#fff;}
 
   footer{margin-top:34px;color:#5f7185;font-size:12.5px;text-align:center;line-height:1.8;max-width:560px;}
 </style>
@@ -94,9 +97,23 @@
       </ul>
       <span class="go">開く →</span>
     </a>
+
+    <a class="card gm" href="gmail-jp.html">
+      <div class="top">
+        <span class="badge"><svg width="34" height="26" viewBox="0 0 52 40"><path fill="#4285F4" d="M4 38h8V20L0 11v23a4 4 0 0 0 4 4z"/><path fill="#34A853" d="M40 38h8a4 4 0 0 0 4-4V11L40 20z"/><path fill="#FBBC04" d="M40 6v14l12-9V8a4 4 0 0 0-6.4-3.2z"/><path fill="#EA4335" d="M12 20V6l14 10.5L40 6v14L26 30.5z"/><path fill="#C5221F" d="M0 8v3l12 9V6L6.4 4.8A4 4 0 0 0 0 8z"/></svg></span>
+        <div><h2>Gmail</h2><div class="tag">メール（PC / モバイル）</div></div>
+      </div>
+      <ul class="feats">
+        <li>PC（Web）/ モバイル アプリ切替</li>
+        <li>業種・職務別の受信トレイ（9種）</li>
+        <li>日本語 / English 言語切替</li>
+        <li>新着受信・開封・検索を自動再生</li>
+      </ul>
+      <span class="go">開く →</span>
+    </a>
   </div>
 
   <footer>各デモは左側パネルで業種・言語・比率・モックアップを切り替えられます。<br>
-  録画時はモックアップを OFF にして画面のみをキャプチャしてください。</footer>
+  「🔴 MP4 녹화」ボタンで画面のみを録画して MP4 保存できます（Chrome / Edge 推奨・「このタブ」を選択）。</footer>
 </body>
 </html>

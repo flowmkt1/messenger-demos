@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Outlook風 メール デモ</title>
+<title>Gmail風 メール デモ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
-  body{font-family:"Noto Sans JP","Segoe UI",sans-serif;background:#202730;min-height:100vh;
+  body{font-family:"Noto Sans JP","Roboto","Segoe UI",sans-serif;background:#202730;min-height:100vh;
     display:flex;align-items:center;justify-content:center;padding:24px 16px 40px 320px;}
 
-  /* ===== 조작 패널 ===== */
+  /* ===== 패널 ===== */
   .controls{width:280px;flex-shrink:0;position:fixed;left:20px;top:24px;
     background:#2b333d;border:1px solid #3b4654;border-radius:14px;padding:14px 16px;color:#cdd6e0;z-index:50;}
   .controls h2{font-size:13px;font-weight:600;color:#8ea3b8;margin:12px 0 8px;letter-spacing:.02em;}
@@ -20,197 +20,142 @@
   .seg{display:flex;gap:6px;margin-bottom:6px;}
   .seg .btn{flex:1;text-align:center;}
   .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px;}
-  .chip{border:1px solid #45525f;background:#333d49;color:#c7d2dd;font-size:12.5px;
-    padding:6px 11px;border-radius:999px;cursor:pointer;transition:.15s;white-space:nowrap;}
+  .chip{border:1px solid #45525f;background:#333d49;color:#c7d2dd;font-size:12.5px;padding:6px 11px;border-radius:999px;cursor:pointer;transition:.15s;white-space:nowrap;}
   .chip:hover{background:#3d4956;}
-  .chip.active{background:#0f6cbd;border-color:#0f6cbd;color:#fff;font-weight:600;}
+  .chip.active{background:#c5221f;border-color:#c5221f;color:#fff;font-weight:600;}
   .row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
   .btn{border:none;background:#3f4b58;color:#dfe7ef;font-size:12.5px;padding:7px 12px;border-radius:8px;cursor:pointer;transition:.15s;}
   .btn:hover{background:#4a5867;}
-  .btn.active{background:#0f6cbd;color:#fff;font-weight:600;}
+  .btn.active{background:#c5221f;color:#fff;font-weight:600;}
   .toggle{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#aebccb;cursor:pointer;user-select:none;}
-  .toggle input{width:15px;height:15px;accent-color:#0f6cbd;cursor:pointer;}
+  .toggle input{width:15px;height:15px;accent-color:#c5221f;cursor:pointer;}
 
-  /* ===== 무대 ===== */
   .stage{display:flex;align-items:center;justify-content:center;}
 
-  /* ========== PC (데스크톱 Outlook) ========== */
-  .pcwin{width:1000px;height:624px;background:#faf9f8;border-radius:10px;overflow:hidden;
+  /* ========== PC (Gmail web) ========== */
+  .gwin{width:1020px;height:648px;background:#f6f8fc;border-radius:10px;overflow:hidden;
     box-shadow:0 24px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;position:relative;}
-  .pcwin.flat{border-radius:0;box-shadow:none;}
-  .pc-top{height:48px;background:#fff;border-bottom:1px solid #edebe9;display:flex;align-items:center;gap:12px;padding:0 14px;}
-  .pc-top .logo{display:flex;align-items:center;gap:8px;font-weight:600;color:#0f6cbd;font-size:15px;}
-  .pc-top .logo .sq{width:20px;height:20px;border-radius:4px;background:#0f6cbd;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;}
-  .pc-search{flex:1;max-width:420px;margin:0 auto;height:30px;background:#f3f2f1;border:1px solid #e1dfdd;border-radius:6px;
-    display:flex;align-items:center;gap:8px;padding:0 10px;color:#605e5c;font-size:13px;}
-  .pc-search input{border:none;background:none;outline:none;flex:1;font:inherit;color:#323130;}
-  .pc-top .tr{display:flex;align-items:center;gap:14px;color:#605e5c;margin-left:auto;}
-  .pc-top .tr .dot{width:18px;height:18px;}
-  .pc-ribbon{height:36px;background:#fff;border-bottom:1px solid #edebe9;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:13px;color:#444;}
-  .pc-ribbon .rt{padding:7px 2px;cursor:default;}
-  .pc-ribbon .rt.on{color:#0f6cbd;font-weight:600;box-shadow:inset 0 -2px 0 #0f6cbd;}
+  .gwin.flat{border-radius:0;box-shadow:none;}
+  .gm-top{height:60px;background:#f6f8fc;display:flex;align-items:center;gap:14px;padding:0 16px;}
+  .gm-top .burger{font-size:20px;color:#5f6368;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+  .gm-top .logo{display:flex;align-items:center;gap:7px;}
+  .gm-top .logo span{font-size:21px;color:#5f6368;font-weight:400;letter-spacing:.5px;}
+  .gm-search{flex:0 1 660px;height:46px;background:#eaf1fb;border-radius:24px;display:flex;align-items:center;gap:12px;padding:0 18px;color:#5f6368;font-size:15px;transition:.15s;}
+  .gm-search:focus-within{background:#fff;box-shadow:0 1px 6px rgba(32,33,36,.28);}
+  .gm-search input{border:none;background:none;outline:none;flex:1;font:inherit;color:#202124;}
+  .gm-top .tr{display:flex;align-items:center;gap:6px;margin-left:auto;color:#5f6368;}
+  .gm-top .tr .ti{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:17px;}
+  .gm-top .tr .ti:hover{background:#e8eaed;}
+  .gm-top .acc{width:32px;height:32px;border-radius:50%;background:#c5221f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;margin-left:4px;}
 
-  .pc-body{flex:1;display:flex;min-height:0;}
-  .pc-nav{width:200px;background:#faf9f8;border-right:1px solid #edebe9;padding:10px 8px;overflow-y:auto;font-size:13px;}
-  .pc-nav .newbtn{width:100%;background:#0f6cbd;color:#fff;border:none;border-radius:6px;padding:8px;font:inherit;font-weight:600;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:7px;justify-content:center;}
-  .pc-nav .navsec{color:#8a8886;font-size:11.5px;font-weight:600;margin:10px 6px 4px;}
-  .pc-nav .nav{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:5px;color:#323130;cursor:default;}
-  .pc-nav .nav .ico{width:16px;text-align:center;opacity:.7;}
-  .pc-nav .nav .cnt{margin-left:auto;color:#8a8886;font-size:12px;}
-  .pc-nav .nav.on{background:#eef6fc;color:#0f6cbd;font-weight:600;}
-  .pc-nav .nav.on .cnt{color:#0f6cbd;}
+  .gm-body{flex:1;display:flex;min-height:0;background:#f6f8fc;}
+  .gm-nav{width:232px;padding:8px 8px 8px 8px;overflow-y:auto;}
+  .gm-nav .compose{display:flex;align-items:center;gap:12px;background:#c2e7ff;color:#001d35;border:none;border-radius:16px;
+    padding:14px 22px 14px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;margin:4px 0 14px;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+  .gm-nav .nav{display:flex;align-items:center;gap:16px;padding:8px 12px 8px 22px;border-radius:0 16px 16px 0;color:#202124;font-size:14px;cursor:default;margin-right:6px;}
+  .gm-nav .nav .ico{font-size:16px;width:18px;text-align:center;color:#5f6368;}
+  .gm-nav .nav .cnt{margin-left:auto;font-size:12.5px;color:#202124;font-weight:600;}
+  .gm-nav .nav.on{background:#d3e3fd;font-weight:700;}
+  .gm-nav .nav.on .ico{color:#001d35;}
 
-  .pc-list{width:368px;background:#fff;border-right:1px solid #edebe9;display:flex;flex-direction:column;min-width:0;}
-  .pc-list .lhead{display:flex;align-items:center;gap:18px;padding:10px 14px 0;}
-  .pc-list .ft{font-size:14px;color:#605e5c;padding-bottom:8px;cursor:default;}
-  .pc-list .ft.on{color:#323130;font-weight:600;box-shadow:inset 0 -2px 0 #0f6cbd;}
-  .pc-list .scroll{flex:1;overflow-y:auto;}
-  .pc-list .scroll::-webkit-scrollbar{width:8px;}
-  .pc-list .scroll::-webkit-scrollbar-thumb{background:#d2d0ce;border-radius:4px;}
+  .gm-main{flex:1;background:#fff;border-radius:16px 0 0 0;margin:0;display:flex;flex-direction:column;min-width:0;position:relative;overflow:hidden;border-top:1px solid #f1f3f4;}
+  .gm-tabs{display:flex;align-items:center;padding:0 8px;border-bottom:1px solid #f1f3f4;height:46px;gap:2px;}
+  .gm-tabs .gt{display:flex;align-items:center;gap:10px;padding:0 22px;height:46px;font-size:13.5px;color:#5f6368;cursor:default;position:relative;}
+  .gm-tabs .gt.on{color:#d93025;font-weight:600;}
+  .gm-tabs .gt.on::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:3px;background:#d93025;border-radius:3px 3px 0 0;}
+  .gm-toolbar{display:flex;align-items:center;gap:10px;padding:4px 16px;height:40px;color:#5f6368;font-size:15px;border-bottom:1px solid #f6f8fc;}
+  .gm-list{flex:1;overflow-y:auto;}
+  .gm-list::-webkit-scrollbar{width:10px;} .gm-list::-webkit-scrollbar-thumb{background:#dadce0;border-radius:5px;}
 
-  .grphd{padding:8px 14px 4px;font-size:12px;font-weight:600;color:#605e5c;background:#fff;position:sticky;top:0;}
-  .mailrow{display:flex;gap:10px;padding:9px 12px 9px 10px;border-bottom:1px solid #f3f2f1;cursor:pointer;position:relative;}
-  .mailrow:hover{background:#f8f8f8;}
-  .mailrow.sel{background:#eaf2fb;}
-  .mailrow.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#0f6cbd;}
-  .mailrow .av{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;margin-top:2px;}
-  .mailrow .mid{flex:1;min-width:0;}
-  .mailrow .l1{display:flex;align-items:center;gap:6px;}
-  .mailrow .from{font-size:13.5px;color:#201f1e;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .mailrow .time{font-size:12px;color:#8a8886;flex-shrink:0;}
-  .mailrow .subj{font-size:13px;color:#201f1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
-  .mailrow .prev{font-size:12.5px;color:#8a8886;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
-  .mailrow.unread .from{font-weight:700;}
-  .mailrow.unread .subj{font-weight:700;color:#0f6cbd;}
-  .mailrow.unread .udot{position:absolute;left:3px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:#0f6cbd;}
+  .grow{display:flex;align-items:center;gap:12px;padding:0 16px;height:40px;border-bottom:1px solid #f1f3f4;cursor:pointer;background:#fff;}
+  .grow:hover{box-shadow:inset 0 0 0 1px #e8eaed,0 1px 3px rgba(60,64,67,.25);z-index:1;}
+  .grow.unread{background:#fff;}
+  .grow.read{background:#f6f8fc;}
+  .grow .ck{color:#bdc1c6;font-size:15px;}
+  .grow .star{color:#dadce0;font-size:15px;}
+  .grow .gav{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;}
+  .grow .from{width:168px;flex-shrink:0;font-size:13.5px;color:#5f6368;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .grow.unread .from{color:#202124;font-weight:700;}
+  .grow .mid{flex:1;min-width:0;font-size:13.5px;color:#5f6368;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .grow .mid .sub{color:#202124;}
+  .grow.unread .mid .sub{font-weight:700;}
+  .grow .mid .snip{color:#5f6368;}
+  .grow .time{font-size:12px;color:#5f6368;flex-shrink:0;}
+  .grow.unread .time{color:#202124;font-weight:700;}
 
-  .pc-read{flex:1;background:#fff;display:flex;flex-direction:column;min-width:0;}
-  .pc-read .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#a19f9d;gap:10px;}
-  .pc-read .empty .ic{font-size:46px;opacity:.4;}
-  .rd{flex:1;display:flex;flex-direction:column;min-height:0;}
-  .rd .rsubj{font-size:19px;font-weight:600;color:#201f1e;padding:16px 22px 8px;}
-  .rd .rhead{display:flex;align-items:center;gap:11px;padding:4px 22px 14px;border-bottom:1px solid #edebe9;}
-  .rd .rhead .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:600;flex-shrink:0;}
-  .rd .rhead .who{flex:1;min-width:0;}
-  .rd .rhead .nm{font-size:14px;font-weight:600;color:#201f1e;}
-  .rd .rhead .to{font-size:12.5px;color:#8a8886;}
-  .rd .rhead .rtime{font-size:12.5px;color:#8a8886;}
-  .rd .rbody{flex:1;overflow-y:auto;padding:18px 22px;font-size:14px;line-height:1.7;color:#323130;white-space:pre-line;}
-  .rd .ract{display:flex;gap:8px;padding:12px 22px;border-top:1px solid #edebe9;}
-  .rd .ract .ab{border:1px solid #d2d0ce;background:#fff;border-radius:6px;padding:7px 16px;font:inherit;font-size:13px;color:#323130;cursor:pointer;display:flex;align-items:center;gap:6px;}
-  .rd .ract .ab:hover{background:#f3f2f1;}
+  /* 대화 보기 (PC, 리스트 대체) */
+  .gm-read{position:absolute;inset:0;background:#fff;display:none;flex-direction:column;}
+  .gm-read.show{display:flex;}
+  .gr-bar{display:flex;align-items:center;gap:6px;padding:6px 16px;height:48px;color:#5f6368;font-size:17px;border-bottom:1px solid #f1f3f4;}
+  .gr-bar .bk{font-size:22px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;}
+  .gr-bar .bk:hover{background:#e8eaed;}
+  .gr-bar .ti{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;}
+  .gr-bar .ti:hover{background:#e8eaed;}
+  .gr-scroll{flex:1;overflow-y:auto;padding:18px 28px;}
+  .gr-subj{font-size:22px;color:#202124;font-weight:400;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+  .gr-subj .lbl2{font-size:11px;background:#e8eaed;color:#3c4043;border-radius:4px;padding:2px 8px;font-weight:500;}
+  .gr-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .gr-head .gav{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;}
+  .gr-head .who{flex:1;min-width:0;}
+  .gr-head .nm{font-size:14px;color:#202124;font-weight:600;}
+  .gr-head .em{font-size:12.5px;color:#5f6368;}
+  .gr-head .rt{font-size:12.5px;color:#5f6368;}
+  .gr-body{font-size:14px;line-height:1.8;color:#202124;white-space:pre-line;}
+  .gr-acts{display:flex;gap:10px;margin-top:26px;}
+  .gr-acts .ab{display:flex;align-items:center;gap:8px;border:1px solid #dadce0;border-radius:18px;padding:8px 22px;font:inherit;font-size:13.5px;color:#3c4043;cursor:pointer;}
+  .gr-acts .ab:hover{background:#f6f8fc;}
 
-  /* 토스트 */
-  .toast{position:absolute;right:18px;bottom:18px;background:#fff;border:1px solid #e1dfdd;border-left:4px solid #0f6cbd;
-    border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:11px 14px;min-width:230px;max-width:300px;
-    opacity:0;transform:translateY(12px);transition:.3s;z-index:30;pointer-events:none;}
-  .toast.show{opacity:1;transform:none;}
-  .toast .tt{font-size:12px;color:#0f6cbd;font-weight:600;margin-bottom:3px;}
-  .toast .tf{font-size:13px;font-weight:600;color:#201f1e;}
-  .toast .ts{font-size:12.5px;color:#605e5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gm-toast{position:absolute;left:18px;bottom:18px;background:#323232;color:#fff;border-radius:8px;
+    padding:13px 18px;font-size:13.5px;box-shadow:0 4px 14px rgba(0,0,0,.3);opacity:0;transform:translateY(12px);transition:.3s;z-index:30;display:flex;align-items:center;gap:18px;}
+  .gm-toast.show{opacity:1;transform:none;}
+  .gm-toast .un{color:#8ab4f8;font-weight:600;}
 
-  /* ========== Mobile (Outlook 앱) ========== */
+  /* ========== Mobile (Gmail 앱) ========== */
   .phone{width:380px;height:760px;background:#000;border-radius:42px;padding:11px;overflow:hidden;
     box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 2px #2c2c2c;transition:.2s;}
   .phone.r34{height:520px;}
   .phone.flat{background:none;border-radius:0;padding:0;box-shadow:none;}
   .phone.flat .mscreen{border-radius:0;}
   .mscreen{width:100%;height:100%;border-radius:32px;overflow:hidden;background:#fff;display:flex;flex-direction:column;position:relative;}
-  .m-status{height:24px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:12px;font-weight:600;color:#201f1e;}
-  .m-status .batt{width:22px;height:11px;border:1px solid #201f1e;border-radius:3px;position:relative;padding:1px;}
-  .m-status .batt::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:5px;background:#201f1e;border-radius:0 1px 1px 0;}
-  .m-status .batt i{display:block;width:80%;height:100%;background:#201f1e;border-radius:1px;}
-  .m-head{padding:6px 14px 8px;border-bottom:1px solid #edebe9;}
-  .m-head .r1{display:flex;align-items:center;gap:12px;}
-  .m-head .mav{width:30px;height:30px;border-radius:50%;background:#0f6cbd;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
-  .m-head .mtit{font-size:20px;font-weight:700;color:#201f1e;flex:1;}
-  .m-head .mic{color:#605e5c;font-size:18px;}
-  .m-search{margin-top:10px;height:36px;background:#f3f2f1;border-radius:8px;display:flex;align-items:center;gap:8px;padding:0 12px;color:#8a8886;font-size:14px;}
-  .m-search input{border:none;background:none;outline:none;flex:1;font:inherit;color:#323130;}
-  .m-tabs{display:flex;gap:22px;padding:8px 16px 0;}
-  .m-tabs .mt{font-size:14px;color:#8a8886;padding-bottom:8px;}
-  .m-tabs .mt.on{color:#0f6cbd;font-weight:600;box-shadow:inset 0 -2px 0 #0f6cbd;}
+  .m-status{height:24px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:12px;font-weight:600;color:#202124;}
+  .m-status .batt{width:22px;height:11px;border:1px solid #202124;border-radius:3px;position:relative;padding:1px;}
+  .m-status .batt::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:5px;background:#202124;border-radius:0 1px 1px 0;}
+  .m-status .batt i{display:block;width:80%;height:100%;background:#202124;border-radius:1px;}
+  .m-sbar{margin:8px 12px 6px;height:50px;background:#eaf1fb;border-radius:26px;display:flex;align-items:center;gap:12px;padding:0 14px;}
+  .m-sbar .bg{font-size:20px;color:#5f6368;}
+  .m-sbar input{border:none;background:none;outline:none;flex:1;font:inherit;font-size:15px;color:#202124;}
+  .m-sbar input::placeholder{color:#5f6368;}
+  .m-sbar .ma{width:30px;height:30px;border-radius:50%;background:#c5221f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;}
+  .m-sec{padding:10px 18px 4px;font-size:12.5px;font-weight:600;color:#5f6368;}
   .m-list{flex:1;overflow-y:auto;}
   .m-list::-webkit-scrollbar{display:none;}
-  .mrow{display:flex;gap:11px;padding:12px 14px;border-bottom:1px solid #f3f2f1;cursor:pointer;position:relative;}
-  .mrow:active{background:#f5f5f5;}
-  .mrow .av{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:600;}
+  .mrow{display:flex;gap:13px;padding:12px 16px;cursor:pointer;align-items:flex-start;}
+  .mrow .gav{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:600;margin-top:2px;}
   .mrow .mid{flex:1;min-width:0;}
-  .mrow .l1{display:flex;gap:6px;align-items:center;}
-  .mrow .from{font-size:14.5px;color:#201f1e;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .mrow .time{font-size:12px;color:#8a8886;}
-  .mrow .subj{font-size:13.5px;color:#201f1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
-  .mrow .prev{font-size:13px;color:#8a8886;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
-  .mrow.unread .from,.mrow.unread .subj{font-weight:700;}
-  .mrow.unread .udot{position:absolute;left:4px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:#0f6cbd;}
-  .mgrp{padding:10px 16px 4px;font-size:12.5px;font-weight:600;color:#605e5c;}
-  .m-compose{position:absolute;right:18px;bottom:74px;width:52px;height:52px;border-radius:14px;background:#0f6cbd;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 16px rgba(15,108,189,.4);z-index:12;}
-  .m-bottom{height:54px;border-top:1px solid #edebe9;display:flex;align-items:center;justify-content:space-around;color:#8a8886;font-size:11px;}
-  .m-bottom .bn{display:flex;flex-direction:column;align-items:center;gap:2px;}
-  .m-bottom .bn.on{color:#0f6cbd;}
-  .m-bottom .bn .bi{font-size:18px;}
+  .mrow .l1{display:flex;gap:8px;align-items:center;}
+  .mrow .from{flex:1;font-size:14px;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mrow .time{font-size:12px;color:#5f6368;}
+  .mrow.unread .from,.mrow.unread .sub{font-weight:700;}
+  .mrow .sub{font-size:13.5px;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .mrow .snip{font-size:13px;color:#5f6368;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .mrow .star{color:#dadce0;font-size:17px;margin-top:2px;}
+  .m-fab{position:absolute;right:18px;bottom:20px;height:52px;border-radius:16px;background:#c2e7ff;color:#001d35;display:flex;align-items:center;gap:9px;padding:0 20px;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.25);z-index:12;}
 
-  .m-read{position:absolute;inset:0;background:#fff;z-index:20;display:flex;flex-direction:column;
-    transform:translateX(100%);transition:transform .28s ease;}
+  .m-read{position:absolute;inset:0;background:#fff;z-index:20;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s ease;}
   .m-read.open{transform:none;}
-  .m-read .mr-top{height:50px;display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:1px solid #edebe9;color:#0f6cbd;}
-  .m-read .mr-top .bk{font-size:24px;}
-  .m-read .mr-top .sp{flex:1;}
-  .m-read .mr-top .mic{color:#605e5c;font-size:17px;}
-  .m-read .mr-subj{font-size:19px;font-weight:700;color:#201f1e;padding:14px 16px 10px;}
-  .m-read .mr-from{display:flex;align-items:center;gap:11px;padding:0 16px 14px;border-bottom:1px solid #edebe9;}
-  .m-read .mr-from .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;}
-  .m-read .mr-from .nm{font-size:14px;font-weight:600;color:#201f1e;}
-  .m-read .mr-from .to{font-size:12.5px;color:#8a8886;}
-  .m-read .mr-body{flex:1;overflow-y:auto;padding:16px;font-size:15px;line-height:1.75;color:#323130;white-space:pre-line;}
-  .m-read .mr-act{display:flex;gap:8px;padding:10px 14px;border-top:1px solid #edebe9;}
-  .m-read .mr-act .ab{flex:1;border:1px solid #d2d0ce;background:#fff;border-radius:8px;padding:9px;font:inherit;font-size:13px;color:#323130;text-align:center;}
-
-  /* ===== Outlook PC 충실도 보강 ===== */
-  .pcwin{width:1020px;height:648px;background:#f3f2f1;}
-  .pc-title{height:46px;background:#f5f4f2;display:flex;align-items:center;gap:12px;padding:0 0 0 12px;}
-  .pc-title .logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:#0a2a4d;}
-  .pc-title .logo svg{display:block;}
-  .pc-search{flex:0 1 480px;margin:0 auto;height:30px;background:#fff;border:1px solid #e1dfdd;border-radius:6px;display:flex;align-items:center;gap:8px;padding:0 10px;color:#605e5c;font-size:13px;box-shadow:0 1px 1px rgba(0,0,0,.04);}
-  .pc-search input{border:none;background:none;outline:none;flex:1;font:inherit;color:#323130;}
-  .pc-title .tr{display:flex;align-items:center;margin-left:auto;}
-  .pc-title .ti{width:40px;height:46px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#555;}
-  .pc-title .ti:hover{background:#eceae9;}
-  .pc-title .wbtns{display:flex;height:46px;margin-left:6px;}
-  .pc-title .wb{width:46px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#444;}
-  .pc-title .wb:hover{background:#e5e5e5;}
-  .pc-title .wb.cl:hover{background:#e81123;color:#fff;}
-
-  .pc-tabs{height:34px;background:#f5f4f2;display:flex;align-items:center;gap:2px;padding:0 12px;border-bottom:1px solid #edebe9;}
-  .pc-tabs .rt{font-size:13px;color:#444;padding:6px 10px;border-radius:4px;position:relative;cursor:default;}
-  .pc-tabs .rt.on{color:#0f6cbd;font-weight:600;}
-  .pc-tabs .rt.on::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;background:#0f6cbd;}
-
-  .pc-cmd{height:44px;background:#fff;display:flex;align-items:center;padding:0 8px;border-bottom:1px solid #edebe9;font-size:12.5px;color:#323130;overflow:hidden;}
-  .pc-cmd .ci{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:5px;white-space:nowrap;cursor:default;}
-  .pc-cmd .ci:hover{background:#f3f2f1;}
-  .pc-cmd .ci .g{font-size:14px;}
-  .pc-cmd .sep{width:1px;height:20px;background:#e1dfdd;margin:0 5px;}
-
-  .pc-main{flex:1;display:flex;min-height:0;}
-  .pc-rail{width:48px;background:#f5f4f2;border-right:1px solid #edebe9;display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:4px;}
-  .pc-rail .ri{width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#605e5c;position:relative;cursor:default;}
-  .pc-rail .ri:hover{background:#eceae9;}
-  .pc-rail .ri.on{color:#0f6cbd;}
-  .pc-rail .ri.on::before{content:"";position:absolute;left:-4px;top:9px;bottom:9px;width:3px;border-radius:2px;background:#0f6cbd;}
-
-  .pc-nav{width:212px;background:#f5f4f2;}
-  .pc-list .lhead{display:flex;align-items:center;padding:10px 12px 0;gap:10px;}
-  .pc-list .fts{display:flex;gap:18px;flex:1;}
-  .pc-list .filter{color:#605e5c;font-size:14px;padding-bottom:8px;}
-
-  .mailrow.unread .udot{left:0;top:9px;bottom:9px;width:3px;height:auto;border-radius:0 2px 2px 0;transform:none;}
-
-  .rd .rtools{display:flex;align-items:center;gap:2px;padding:8px 14px 0;}
-  .rd .rtools .sp{flex:1;}
-  .rd .rtools .ti{width:32px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:5px;color:#555;font-size:14px;cursor:default;}
-  .rd .rtools .ti:hover{background:#f3f2f1;}
-  .rd .rsubj{padding-top:10px;}
+  .mr-bar{height:50px;display:flex;align-items:center;gap:8px;padding:0 12px;color:#5f6368;border-bottom:1px solid #f1f3f4;}
+  .mr-bar .bk{font-size:24px;width:36px;}
+  .mr-bar .sp{flex:1;}
+  .mr-bar .ti{font-size:17px;width:34px;text-align:center;}
+  .mr-scroll{flex:1;overflow-y:auto;padding:16px;}
+  .mr-subj{font-size:20px;color:#202124;margin-bottom:16px;}
+  .mr-head{display:flex;align-items:center;gap:11px;margin-bottom:16px;}
+  .mr-head .gav{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;}
+  .mr-head .nm{font-size:14px;font-weight:600;color:#202124;}
+  .mr-head .to{font-size:12.5px;color:#5f6368;}
+  .mr-body{font-size:15px;line-height:1.8;color:#202124;white-space:pre-line;}
+  .mr-acts{display:flex;gap:10px;padding:12px 16px;border-top:1px solid #f1f3f4;}
+  .mr-acts .ab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #dadce0;border-radius:18px;padding:9px;font:inherit;font-size:13px;color:#3c4043;}
 </style>
 </head>
 <body>
@@ -228,12 +173,8 @@
     </div>
     <h2>직무/산업 선택</h2>
     <div class="chips" id="chips"></div>
-    <div class="row2">
-      <button class="btn" id="replay">▶ 시나리오 재생</button>
-    </div>
-    <div class="row2">
-      <label class="toggle"><input type="checkbox" id="mockup" checked> 목업/창 테두리</label>
-    </div>
+    <div class="row2"><button class="btn" id="replay">▶ 시나리오 재생</button></div>
+    <div class="row2"><label class="toggle"><input type="checkbox" id="mockup" checked> 목업/창 테두리</label></div>
     <div class="row2" id="ratioRow" style="display:none;">
       <span style="font-size:12.5px;color:#aebccb;">비율</span>
       <button class="btn ratio active" data-ratio="916">9:16</button>
@@ -243,77 +184,57 @@
       <button class="btn" id="recBtn" style="background:#c0392b;color:#fff;">🔴 MP4 녹화</button>
       <span style="font-size:11.5px;color:#6f8194;">화면 공유에서 <b>이 탭</b> 선택 → 자동 저장</span>
     </div>
-    <div class="row2"><span style="font-size:11.5px;color:#6f8194;">메일 행을 직접 클릭/검색해도 됩니다</span></div>
+    <div class="row2"><span style="font-size:11.5px;color:#6f8194;">메일을 직접 클릭/검색해도 됩니다</span></div>
   </div>
 
   <div class="stage">
     <!-- ===== PC ===== -->
-    <div class="pcwin" id="pcwin">
-      <div class="pc-title">
+    <div class="gwin" id="gwin">
+      <div class="gm-top">
+        <span class="burger">☰</span>
         <div class="logo">
-          <svg width="22" height="22" viewBox="0 0 32 32"><rect x="14" y="6" width="17" height="20" rx="2.5" fill="#0F6CBD"/><path d="M16 11h13v1.6H16zM16 15h13v1.6H16zM16 19h9v1.6h-9z" fill="#fff" opacity=".95"/><rect x="1" y="9" width="16" height="16" rx="3" fill="#0A4F8F"/><text x="9" y="21" font-size="12" font-weight="700" fill="#fff" text-anchor="middle" font-family="Arial,sans-serif">O</text></svg>
-          Outlook
+          <svg width="36" height="28" viewBox="0 0 52 40"><path fill="#4285F4" d="M4 38h8V20L0 11v23a4 4 0 0 0 4 4z"/><path fill="#34A853" d="M40 38h8a4 4 0 0 0 4-4V11L40 20z"/><path fill="#FBBC04" d="M40 6v14l12-9V8a4 4 0 0 0-6.4-3.2z"/><path fill="#EA4335" d="M12 20V6l14 10.5L40 6v14L26 30.5z"/><path fill="#C5221F" d="M0 8v3l12 9V6L6.4 4.8A4 4 0 0 0 0 8z"/></svg>
+          <span>Gmail</span>
         </div>
-        <div class="pc-search">🔍 <input id="pcSearch" placeholder="検索"></div>
-        <div class="tr">
-          <span class="ti">▦</span><span class="ti">🔔</span><span class="ti">⚙</span>
-          <div class="wbtns"><span class="wb">─</span><span class="wb">▢</span><span class="wb cl">✕</span></div>
+        <div class="gm-search">🔍 <input id="pcSearch" placeholder="メールを検索"></div>
+        <div class="tr"><span class="ti">？</span><span class="ti">⚙</span><span class="ti">▦</span><span class="acc" id="pcAcc">あ</span></div>
+      </div>
+      <div class="gm-body">
+        <div class="gm-nav" id="gmNav"></div>
+        <div class="gm-main">
+          <div class="gm-tabs" id="gmTabs"></div>
+          <div class="gm-toolbar"><span>☐</span><span>⟳</span><span>⋮</span></div>
+          <div class="gm-list" id="pcList"></div>
+          <div class="gm-read" id="pcRead"></div>
+          <div class="gm-toast" id="gmToast"><span class="un" id="toastUn"></span><span id="toastTx"></span></div>
         </div>
       </div>
-      <div class="pc-tabs" id="pcRibbon"></div>
-      <div class="pc-cmd" id="pcCmd"></div>
-      <div class="pc-main">
-        <div class="pc-rail">
-          <span class="ri on">✉</span><span class="ri">📅</span><span class="ri">👥</span><span class="ri">☑</span><span class="ri">📁</span>
-        </div>
-        <div class="pc-nav" id="pcNav"></div>
-        <div class="pc-list">
-          <div class="lhead"><div class="fts"><span class="ft on" id="pcFocused">優先</span><span class="ft" id="pcOther">その他</span></div><span class="filter">⤓</span></div>
-          <div class="scroll" id="pcList"></div>
-        </div>
-        <div class="pc-read" id="pcRead"></div>
-      </div>
-      <div class="toast" id="pcToast"><div class="tt" id="toastTt">新着メール</div><div class="tf" id="toastFrom"></div><div class="ts" id="toastSub"></div></div>
     </div>
 
     <!-- ===== Mobile ===== -->
     <div class="phone" id="phone" style="display:none;">
       <div class="mscreen">
-        <div class="m-status"><span>17:08</span><span class="right"><span class="batt"><i></i></span></span></div>
-        <div class="m-head">
-          <div class="r1"><span class="mav" id="mbAv">O</span><span class="mtit" id="mbTitle">受信トレイ</span><span class="mic">⌕</span><span class="mic">⋯</span></div>
-          <div class="m-search">🔍 <input id="mbSearch" placeholder="検索"></div>
-          <div class="m-tabs"><span class="mt on" id="mbFocused">優先</span><span class="mt" id="mbOther">その他</span></div>
-        </div>
+        <div class="m-status"><span>17:08</span><span class="batt"><i></i></span></div>
+        <div class="m-sbar"><span class="bg">☰</span><input id="mbSearch" placeholder="メールを検索"><span class="ma" id="mbAcc">あ</span></div>
+        <div class="m-sec" id="mbSec">受信トレイ</div>
         <div class="m-list" id="mbList"></div>
-        <div class="m-compose">✎</div>
-        <div class="m-bottom" id="mbBottom"></div>
+        <div class="m-fab">✏ <span id="mbCompose">作成</span></div>
         <div class="m-read" id="mbRead"></div>
       </div>
     </div>
   </div>
 
 <script>
-/* ===== UI 텍스트 ===== */
 const UI={
-  ja:{search:"検索",inbox:"受信トレイ",focused:"優先",other:"その他",today:"今日",yest:"昨日",
-      to:"宛先: あなた",empty:"メールを選択して内容を表示",newmail:"新着メール",
-      reply:"返信",replyall:"全員に返信",forward:"転送",del:"削除",arch:"アーカイブ",move:"移動",flag:"フラグ",
-      favorites:"お気に入り",drafts:"下書き",sent:"送信済み",deleted:"削除済み",junk:"迷惑メール",archive:"アーカイブ",
-      expenses:"経費",invoices:"請求書",newbtn:"新規メール",
-      tabs:{home:"ホーム",view:"表示",help:"ヘルプ",msg:"メッセージ",ins:"挿入",fmt:"書式",opt:"オプション"},
-      bottom:["メール","予定表","連絡先","設定"]},
-  en:{search:"Search",inbox:"Inbox",focused:"Focused",other:"Other",today:"Today",yest:"Yesterday",
-      to:"To: You",empty:"Select an email to read",newmail:"New message",
-      reply:"Reply",replyall:"Reply all",forward:"Forward",del:"Delete",arch:"Archive",move:"Move",flag:"Flag",
-      favorites:"Favorites",drafts:"Drafts",sent:"Sent Items",deleted:"Deleted Items",junk:"Junk Email",archive:"Archive",
-      expenses:"Expenses",invoices:"Invoices",newbtn:"New mail",
-      tabs:{home:"Home",view:"View",help:"Help",msg:"Message",ins:"Insert",fmt:"Format",opt:"Options"},
-      bottom:["Mail","Calendar","Contacts","Settings"]}
+  ja:{search:"メールを検索",inbox:"受信トレイ",primary:"メイン",social:"ソーシャル",promo:"プロモーション",
+      today:"今日",yest:"昨日",to:"宛先: 自分",compose:"作成",starred:"スター付き",snoozed:"スヌーズ",
+      sent:"送信済み",drafts:"下書き",more:"もっと見る",reply:"返信",forward:"転送",newmsg:"新着メール",acc:"あ"},
+  en:{search:"Search mail",inbox:"Inbox",primary:"Primary",social:"Social",promo:"Promotions",
+      today:"Today",yest:"Yesterday",to:"to me",compose:"Compose",starred:"Starred",snoozed:"Snoozed",
+      sent:"Sent",drafts:"Drafts",more:"More",reply:"Reply",forward:"Forward",newmsg:"New message",acc:"K"}
 };
 const P=["#2e8bda","#d9534f","#c77d1a","#8e44ad","#1f9d77","#c2417f","#2b7a78","#b9770e","#3a78c2","#6b7280"];
 
-/* ===== 업종별 메일 데이터 (日/英) ===== */
 const scenarios=[
  {key:"IT·개발", q:{ja:"リリース",en:"release"}, mails:[
   {f:{ja:"佐藤",en:"Sato"},c:P[0],s:{ja:"リリース手順書の共有",en:"Release runbook shared"},p:{ja:"本番リリースの手順書をアップしました。",en:"I've uploaded the production release runbook."},b:{ja:"お疲れさまです。\n本番リリースの手順書をドキュメントに上げました。ご確認をお願いします。",en:"Hi team,\nI've uploaded the production release runbook to the docs. Please review."},t:"16:42",g:"today",u:false},
@@ -407,15 +328,12 @@ const scenarios=[
  ]},
 ];
 
-/* ===== 상태 ===== */
 let dev="pc", lang="ja", cur=0, token=0, work=[], openId=null, filter="";
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const initial=()=>scenarios[cur].mails.filter(m=>!m.in).map((m,i)=>({...m,id:m.s.ja+i,shown:true,unread:m.u}));
 const queue=()=>scenarios[cur].mails.filter(m=>m.in).map((m,i)=>({...m,id:"q"+i,shown:true,unread:true}));
-let pending=[];
 
-/* ===== 칩 ===== */
 scenarios.forEach((s,i)=>{
   const c=document.createElement("button");
   c.className="chip"+(i===0?" active":"");c.textContent=s.key;
@@ -423,196 +341,149 @@ scenarios.forEach((s,i)=>{
   $("chips").appendChild(c);
 });
 
-/* ===== 정적 UI (네비/리본/탭/하단) ===== */
 function paintStatic(){
   const T=UI[lang];
-  // tabs + command bar
-  const tb=T.tabs;
-  $("pcRibbon").innerHTML=[["home",1],["view",0],["help",0]]
-    .map(([k,on])=>`<span class="rt${on?" on":""}">${tb[k]}</span>`).join("");
-  $("pcCmd").innerHTML=`
-    <span class="ci"><span class="g">✉</span>${T.newbtn}</span><span class="sep"></span>
-    <span class="ci"><span class="g">🗑</span>${T.del}</span>
-    <span class="ci"><span class="g">🗄</span>${T.arch}</span>
-    <span class="ci"><span class="g">📁</span>${T.move}</span><span class="sep"></span>
-    <span class="ci"><span class="g">↩</span>${T.reply}</span>
-    <span class="ci"><span class="g">↪</span>${T.replyall}</span>
-    <span class="ci"><span class="g">➡</span>${T.forward}</span>`;
-  // nav
-  $("pcNav").innerHTML=`
-    <button class="newbtn">✉ ${T.newbtn}</button>
-    <div class="navsec">★ ${T.favorites}</div>
-    <div class="nav on"><span class="ico">📥</span>${T.inbox}<span class="cnt" id="favInbox"></span></div>
-    <div class="nav"><span class="ico">💳</span>${T.expenses}</div>
-    <div class="nav"><span class="ico">📄</span>${T.invoices}</div>
-    <div class="navsec">katyreid@outlook.com</div>
+  $("gmNav").innerHTML=`
+    <button class="compose">✏ ${T.compose}</button>
     <div class="nav on"><span class="ico">📥</span>${T.inbox}<span class="cnt" id="navInbox"></span></div>
-    <div class="nav"><span class="ico">📝</span>${T.drafts}</div>
+    <div class="nav"><span class="ico">★</span>${T.starred}</div>
+    <div class="nav"><span class="ico">🕘</span>${T.snoozed}</div>
     <div class="nav"><span class="ico">📤</span>${T.sent}</div>
-    <div class="nav"><span class="ico">🗑</span>${T.deleted}</div>
-    <div class="nav"><span class="ico">🚫</span>${T.junk}</div>
-    <div class="nav"><span class="ico">🗄</span>${T.archive}</div>`;
-  $("pcFocused").textContent=T.focused;$("pcOther").textContent=T.other;
+    <div class="nav"><span class="ico">📝</span>${T.drafts}</div>
+    <div class="nav"><span class="ico">▾</span>${T.more}</div>`;
+  $("gmTabs").innerHTML=`
+    <span class="gt on"><span>📥</span>${T.primary}</span>
+    <span class="gt"><span>🏷</span>${T.promo}</span>
+    <span class="gt"><span>👥</span>${T.social}</span>`;
   $("pcSearch").placeholder=T.search;$("mbSearch").placeholder=T.search;
-  $("mbTitle").textContent=T.inbox;$("mbFocused").textContent=T.focused;$("mbOther").textContent=T.other;
-  $("toastTt").textContent=T.newmail;
-  const bi=["📧","📅","👥","⚙"];
-  $("mbBottom").innerHTML=T.bottom.map((b,i)=>`<div class="bn${i===0?" on":""}"><span class="bi">${bi[i]}</span>${b}</div>`).join("");
+  $("mbSec").textContent=T.inbox;$("mbCompose").textContent=T.compose;
+  $("pcAcc").textContent=T.acc;$("mbAcc").textContent=T.acc;
 }
 
-/* ===== 렌더 ===== */
 function visible(){
   const f=filter.trim().toLowerCase();
-  return work.filter(m=>m.shown && (!f ||
-    (m.f[lang]+m.s[lang]+m.p[lang]).toLowerCase().includes(f)));
+  return work.filter(m=>m.shown && (!f || (m.f[lang]+m.s[lang]+m.p[lang]).toLowerCase().includes(f)));
 }
-function av(m){return [...m.f[lang]][0];}
+const av=m=>[...m.f[lang]][0];
 
 function renderList(){
   const T=UI[lang], list=visible();
-  // counts
   const cnt=work.filter(m=>m.shown&&m.unread).length;
-  if($("favInbox"))$("favInbox").textContent=cnt;
   if($("navInbox"))$("navInbox").textContent=cnt;
-  // PC
-  let html="",g=null;
-  list.forEach(m=>{
-    if(m.g!==g){g=m.g;html+=`<div class="grphd">${g==="today"?T.today:T.yest}</div>`;}
-    html+=`<div class="mailrow${m.unread?" unread":""}${m.id===openId?" sel":""}" data-id="${m.id}">
-      ${m.unread?'<span class="udot"></span>':''}
-      <div class="av" style="background:${m.c}">${av(m)}</div>
+  // PC rows
+  $("pcList").innerHTML=list.map(m=>`
+    <div class="grow ${m.unread?"unread":"read"}" data-id="${m.id}">
+      <span class="ck">☐</span><span class="star">☆</span>
+      <span class="gav" style="background:${m.c}">${av(m)}</span>
+      <span class="from">${m.f[lang]}</span>
+      <span class="mid"><span class="sub">${m.s[lang]}</span> <span class="snip">— ${m.p[lang]}</span></span>
+      <span class="time">${m.t}</span></div>`).join("");
+  $("pcList").querySelectorAll(".grow").forEach(r=>r.onclick=()=>openMail(r.dataset.id));
+  // Mobile rows
+  $("mbList").innerHTML=list.map(m=>`
+    <div class="mrow ${m.unread?"unread":""}" data-id="${m.id}">
+      <span class="gav" style="background:${m.c}">${av(m)}</span>
       <div class="mid"><div class="l1"><span class="from">${m.f[lang]}</span><span class="time">${m.t}</span></div>
-      <div class="subj">${m.s[lang]}</div><div class="prev">${m.p[lang]}</div></div></div>`;
-  });
-  $("pcList").innerHTML=html;
-  $("pcList").querySelectorAll(".mailrow").forEach(r=>r.onclick=()=>openMail(r.dataset.id));
-  // Mobile
-  let mh="";g=null;
-  list.forEach(m=>{
-    if(m.g!==g){g=m.g;mh+=`<div class="mgrp">${g==="today"?T.today:T.yest}</div>`;}
-    mh+=`<div class="mrow${m.unread?" unread":""}" data-id="${m.id}">
-      ${m.unread?'<span class="udot"></span>':''}
-      <div class="av" style="background:${m.c}">${av(m)}</div>
-      <div class="mid"><div class="l1"><span class="from">${m.f[lang]}</span><span class="time">${m.t}</span></div>
-      <div class="subj">${m.s[lang]}</div><div class="prev">${m.p[lang]}</div></div></div>`;
-  });
-  $("mbList").innerHTML=mh;
+      <div class="sub">${m.s[lang]}</div><div class="snip">${m.p[lang]}</div></div>
+      <span class="star">☆</span></div>`).join("");
   $("mbList").querySelectorAll(".mrow").forEach(r=>r.onclick=()=>openMail(r.dataset.id));
 }
 
-function emptyRead(){
-  $("pcRead").innerHTML=`<div class="empty"><div class="ic">✉</div><div>${UI[lang].empty}</div></div>`;
-}
 function openMail(id){
   const m=work.find(x=>x.id===id); if(!m)return;
   m.unread=false; openId=id;
-  const T=UI[lang];
+  const T=UI[lang], em=(m.f.en.toLowerCase().replace(/[^a-z]/g,"")||"team")+"@example.com";
   renderList();
-  // PC reading pane
-  $("pcRead").innerHTML=`<div class="rd">
-    <div class="rtools"><span class="sp"></span><span class="ti">↩</span><span class="ti">↪</span><span class="ti">➡</span><span class="ti">🗑</span><span class="ti">🚩</span><span class="ti">⋯</span></div>
-    <div class="rsubj">${m.s[lang]}</div>
-    <div class="rhead"><div class="av" style="background:${m.c}">${av(m)}</div>
-      <div class="who"><div class="nm">${m.f[lang]}</div><div class="to">${T.to}</div></div>
-      <div class="rtime">${m.t}</div></div>
-    <div class="rbody">${m.b[lang]}</div>
-    <div class="ract"><button class="ab">↩ ${T.reply}</button><button class="ab">↩ ${T.replyall}</button><button class="ab">➡ ${T.forward}</button></div>
-  </div>`;
-  // Mobile reading
+  $("pcRead").innerHTML=`
+    <div class="gr-bar"><span class="bk" id="pcBack">←</span><span class="ti">🗄</span><span class="ti">🗑</span><span class="ti">✉</span><span class="ti">🕘</span><span style="flex:1"></span><span class="ti">⋯</span></div>
+    <div class="gr-scroll">
+      <div class="gr-subj">${m.s[lang]} <span class="lbl2">${T.inbox}</span></div>
+      <div class="gr-head"><div class="gav" style="background:${m.c}">${av(m)}</div>
+        <div class="who"><div class="nm">${m.f[lang]}</div><div class="em">&lt;${em}&gt; ${T.to}</div></div>
+        <div class="rt">${m.t}　↩ ⋮</div></div>
+      <div class="gr-body">${m.b[lang]}</div>
+      <div class="gr-acts"><button class="ab">↩ ${T.reply}</button><button class="ab">➡ ${T.forward}</button></div>
+    </div>`;
+  $("pcBack").onclick=closeMail;
+  $("pcRead").classList.add("show");
   $("mbRead").innerHTML=`
-    <div class="mr-top"><span class="bk" id="mbBack">‹</span><span class="sp"></span><span class="mic">↩</span><span class="mic">🗑</span><span class="mic">⋯</span></div>
-    <div class="mr-subj">${m.s[lang]}</div>
-    <div class="mr-from"><div class="av" style="background:${m.c}">${av(m)}</div>
-      <div><div class="nm">${m.f[lang]}</div><div class="to">${T.to}</div></div></div>
-    <div class="mr-body">${m.b[lang]}</div>
-    <div class="mr-act"><button class="ab">↩ ${T.reply}</button><button class="ab">↩ ${T.replyall}</button><button class="ab">➡ ${T.forward}</button></div>`;
+    <div class="mr-bar"><span class="bk" id="mbBack">←</span><span class="ti">🗄</span><span class="ti">🗑</span><span class="ti">✉</span><span class="sp"></span><span class="ti">⋯</span></div>
+    <div class="mr-scroll">
+      <div class="mr-subj">${m.s[lang]}</div>
+      <div class="mr-head"><div class="gav" style="background:${m.c}">${av(m)}</div>
+        <div><div class="nm">${m.f[lang]}</div><div class="to">${T.to}　${m.t}</div></div></div>
+      <div class="mr-body">${m.b[lang]}</div></div>
+    <div class="mr-acts"><button class="ab">↩ ${T.reply}</button><button class="ab">➡ ${T.forward}</button></div>`;
   $("mbBack").onclick=closeMail;
   if(dev==="mobile")$("mbRead").classList.add("open");
 }
 function closeMail(){
-  openId=null; renderList(); emptyRead(); $("mbRead").classList.remove("open");
+  openId=null; $("pcRead").classList.remove("show"); $("mbRead").classList.remove("open"); renderList();
 }
 
-/* 토스트 */
 async function toast(m){
-  $("toastFrom").textContent=m.f[lang];$("toastSub").textContent=m.s[lang];
-  $("pcToast").classList.add("show");
-  await sleep(2600); $("pcToast").classList.remove("show");
+  $("toastUn").textContent=UI[lang].newmsg+" · "+m.f[lang];
+  $("toastTx").textContent="";
+  $("gmToast").classList.add("show");
+  await sleep(2600); $("gmToast").classList.remove("show");
 }
-
-/* 검색 타이핑 */
 async function typeSearch(term){
-  const box = dev==="pc"?$("pcSearch"):$("mbSearch");
-  for(let i=1;i<=term.length;i++){
-    if(box._t!==undefined && box._t!==token)return;
-    filter=term.slice(0,i); box.value=filter; renderList();
-    await sleep(160);
-  }
+  const box=dev==="pc"?$("pcSearch"):$("mbSearch");
+  for(let i=1;i<=term.length;i++){ filter=term.slice(0,i); box.value=filter; renderList(); await sleep(160); }
 }
-async function clearSearch(){
-  filter=""; $("pcSearch").value="";$("mbSearch").value=""; renderList();
-}
+async function clearSearch(){ filter=""; $("pcSearch").value="";$("mbSearch").value=""; renderList(); }
 
-/* ===== 자동 시나리오 ===== */
 async function play(){
   const t=++token;
   closeMail(); filter=""; $("pcSearch").value="";$("mbSearch").value="";
-  work=initial(); pending=queue(); paintStatic(); renderList(); emptyRead();
-  const scrollTop=()=>{ $("pcList").scrollTop=0; $("mbList").scrollTop=0; };
+  work=initial(); paintStatic(); renderList();
+  const q=queue();
   await sleep(900); if(t!==token)return;
-  // 1) 새 메일 2건 도착
-  for(const nm of pending){
+  for(const nm of q){
     if(t!==token)return;
-    work.unshift({...nm}); renderList(); scrollTop(); toast(nm);
+    work.unshift({...nm}); renderList(); $("pcList").scrollTop=0;$("mbList").scrollTop=0; toast(nm);
     await sleep(2400);
   }
   if(t!==token)return;
-  // 2) 첫 메일 열기 → 닫기
-  let target=work.find(m=>m.unread)||work[0];
-  openMail(target.id); await sleep(2800); if(t!==token)return;
-  closeMail(); await sleep(700); if(t!==token)return;
-  // 3) 다른 메일 열기 → 닫기
-  let target2=work.find(m=>m.unread&&m.id!==target.id)||work[2];
-  if(target2){openMail(target2.id); await sleep(2800); if(t!==token)return; closeMail(); await sleep(700);}
+  let a=work.find(m=>m.unread)||work[0];
+  openMail(a.id); await sleep(2800); if(t!==token)return; closeMail(); await sleep(700); if(t!==token)return;
+  let b=work.find(m=>m.unread&&m.id!==a.id)||work[2];
+  if(b){openMail(b.id); await sleep(2800); if(t!==token)return; closeMail(); await sleep(700);}
   if(t!==token)return;
-  // 4) 검색
   await typeSearch(scenarios[cur].q[lang]); if(t!==token)return;
-  await sleep(2200); if(t!==token)return;
-  await clearSearch();
+  await sleep(2200); if(t!==token)return; await clearSearch();
 }
 
-/* ===== 수동 검색 입력 ===== */
 $("pcSearch").addEventListener("input",e=>{filter=e.target.value;renderList();$("mbSearch").value=e.target.value;});
 $("mbSearch").addEventListener("input",e=>{filter=e.target.value;renderList();$("pcSearch").value=e.target.value;});
 
-/* ===== 컨트롤 ===== */
 function applyDevice(){
-  $("pcwin").style.display = dev==="pc"?"flex":"none";
-  $("phone").style.display = dev==="pc"?"none":"block";
-  $("ratioRow").style.display = dev==="pc"?"none":"flex";
+  $("gwin").style.display=dev==="pc"?"flex":"none";
+  $("phone").style.display=dev==="pc"?"none":"block";
+  $("ratioRow").style.display=dev==="pc"?"none":"flex";
 }
 document.querySelectorAll(".btn.dev").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".btn.dev").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active"); dev=b.dataset.dev; applyDevice(); play();
+  b.classList.add("active");dev=b.dataset.dev;applyDevice();play();
 }));
 document.querySelectorAll(".btn.lang").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".btn.lang").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active"); lang=b.dataset.lang; document.documentElement.lang=lang; play();
+  b.classList.add("active");lang=b.dataset.lang;document.documentElement.lang=lang;play();
 }));
 $("mockup").addEventListener("change",e=>{
-  $("pcwin").classList.toggle("flat",!e.target.checked);
+  $("gwin").classList.toggle("flat",!e.target.checked);
   $("phone").classList.toggle("flat",!e.target.checked);
 });
 document.querySelectorAll(".btn.ratio").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll(".btn.ratio").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active"); $("phone").classList.toggle("r34",b.dataset.ratio==="34");
+  b.classList.add("active");$("phone").classList.toggle("r34",b.dataset.ratio==="34");
 }));
 $("replay").onclick=play;
 
 /* ===== 화면 녹화 → MP4 저장 ===== */
 const recBtn=$("recBtn");
 let _rec=null,_chunks=[],_recording=false;
-function _recTarget(){return dev==="pc"?$("pcwin"):$("phone");}
+function _recTarget(){return dev==="pc"?$("gwin"):$("phone");}
 function _pickMime(){
   const c=["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1","video/mp4",
            "video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"];
@@ -644,7 +515,7 @@ async function _startRec(){
     const blob=new Blob(_chunks,{type});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
-    a.href=url; a.download="outlook-demo-"+Date.now()+"."+ext; a.click();
+    a.href=url; a.download="gmail-demo-"+Date.now()+"."+ext; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
     _recording=false; recBtn.textContent="🔴 MP4 녹화"; recBtn.style.background="#c0392b";
   };

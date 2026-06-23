@@ -135,6 +135,10 @@
       <button class="btn ratio active" data-ratio="916">9:16</button>
       <button class="btn ratio" data-ratio="34">3:4</button>
     </div>
+    <div class="row2">
+      <button class="btn" id="recBtn" style="background:#c0392b;color:#fff;">🔴 MP4 녹화</button>
+      <span style="font-size:11.5px;color:#6f8194;">화면 공유에서 <b>이 탭</b> 선택 → 자동 녹화·저장</span>
+    </div>
   </div>
 
   <div class="phone" id="phone">
@@ -440,6 +444,55 @@ document.querySelectorAll(".btn.ratio").forEach(b=>{
   });
 });
 document.getElementById("replay").onclick=play;
+
+/* ===== 화면 녹화 → MP4 저장 ===== */
+const recBtn=document.getElementById("recBtn");
+let _rec=null,_chunks=[],_recording=false;
+function _recTarget(){return document.getElementById("phone");}
+function _pickMime(){
+  const c=["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1","video/mp4",
+           "video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"];
+  for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m)) return m;
+  return "";
+}
+async function _startRec(){
+  if(_recording)return;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){alert("이 브라우저는 화면 녹화를 지원하지 않습니다. Chrome/Edge에서 열어주세요.");return;}
+  let stream;
+  try{ stream=await navigator.mediaDevices.getDisplayMedia({preferCurrentTab:true,video:{frameRate:30},audio:false}); }
+  catch(e){ return; }
+  try{
+    if(window.CropTarget&&CropTarget.fromElement){
+      const ct=await CropTarget.fromElement(_recTarget());
+      const vt=stream.getVideoTracks()[0];
+      if(vt.cropTo) await vt.cropTo(ct);
+    }
+  }catch(e){}
+  const mime=_pickMime();
+  _chunks=[];
+  try{ _rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:8000000}:{}); }
+  catch(e){ _rec=new MediaRecorder(stream); }
+  _rec.ondataavailable=e=>{if(e.data&&e.data.size)_chunks.push(e.data);};
+  _rec.onstop=()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    const type=_rec.mimeType||mime||"video/webm";
+    const ext=type.indexOf("mp4")>=0?"mp4":"webm";
+    const blob=new Blob(_chunks,{type});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download="whatsapp-demo-"+Date.now()+"."+ext; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    _recording=false; recBtn.textContent="🔴 MP4 녹화"; recBtn.style.background="#c0392b";
+  };
+  stream.getVideoTracks()[0].addEventListener("ended",()=>{ if(_recording)_rec.stop(); });
+  _recording=true; recBtn.textContent="⏹ 녹화 중지 / 저장"; recBtn.style.background="#7f1d1d";
+  _rec.start();
+  await play();
+  await sleep(700);
+  if(_recording)_rec.stop();
+}
+recBtn.onclick=()=>{ _recording? _rec.stop() : _startRec(); };
+
 play();
 </script>
 </body>
