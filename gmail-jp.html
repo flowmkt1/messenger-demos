@@ -63,7 +63,16 @@
   .gm-tabs .gt{display:flex;align-items:center;gap:10px;padding:0 22px;height:46px;font-size:13.5px;color:#5f6368;cursor:default;position:relative;}
   .gm-tabs .gt.on{color:#d93025;font-weight:600;}
   .gm-tabs .gt.on::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:3px;background:#d93025;border-radius:3px 3px 0 0;}
-  .gm-toolbar{display:flex;align-items:center;gap:10px;padding:4px 16px;height:40px;color:#5f6368;font-size:15px;border-bottom:1px solid #f6f8fc;}
+  .gm-toolbar{display:flex;align-items:center;justify-content:space-between;padding:4px 16px;height:40px;color:#5f6368;font-size:15px;border-bottom:1px solid #f6f8fc;}
+  .gm-toolbar .tl{display:flex;align-items:center;gap:16px;}
+  .gm-toolbar .tr{display:flex;align-items:center;gap:14px;font-size:12.5px;color:#5f6368;}
+  .gm-nav .nav .cnt{margin-left:auto;}
+  .gm-nav .grp{padding:12px 12px 2px 22px;font-size:12px;color:#80868b;font-weight:600;}
+  .gm-nav .lbl{display:flex;align-items:center;gap:14px;padding:7px 12px 7px 22px;font-size:13.5px;color:#202124;border-radius:0 16px 16px 0;margin-right:6px;cursor:default;}
+  .gm-nav .lbl:hover{background:#f1f3f4;}
+  .gm-nav .lbl .dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+  .gm-nav .lbl .cnt{margin-left:auto;font-size:12px;color:#5f6368;}
+  .grow .att{color:#5f6368;font-size:13px;flex-shrink:0;}
   .gm-list{flex:1;overflow-y:auto;}
   .gm-list::-webkit-scrollbar{width:10px;} .gm-list::-webkit-scrollbar-thumb{background:#dadce0;border-radius:5px;}
 
@@ -203,7 +212,7 @@
         <div class="gm-nav" id="gmNav"></div>
         <div class="gm-main">
           <div class="gm-tabs" id="gmTabs"></div>
-          <div class="gm-toolbar"><span>☐</span><span>⟳</span><span>⋮</span></div>
+          <div class="gm-toolbar"><span class="tl"><span>☐ ▾</span><span>⟳</span><span>⋮</span></span><span class="tr"><span id="gmCount"></span><span>‹</span><span>›</span></span></div>
           <div class="gm-list" id="pcList"></div>
           <div class="gm-read" id="pcRead"></div>
           <div class="gm-toast" id="gmToast"><span class="un" id="toastUn"></span><span id="toastTx"></span></div>
@@ -228,10 +237,12 @@
 const UI={
   ja:{search:"メールを検索",inbox:"受信トレイ",primary:"メイン",social:"ソーシャル",promo:"プロモーション",
       today:"今日",yest:"昨日",to:"宛先: 自分",compose:"作成",starred:"スター付き",snoozed:"スヌーズ",
-      sent:"送信済み",drafts:"下書き",more:"もっと見る",reply:"返信",forward:"転送",newmsg:"新着メール",acc:"あ"},
+      sent:"送信済み",drafts:"下書き",more:"もっと見る",reply:"返信",forward:"転送",newmsg:"新着メール",acc:"あ",
+      count:"31,909 件中 1–50",categories:"カテゴリ",labels:"ラベル"},
   en:{search:"Search mail",inbox:"Inbox",primary:"Primary",social:"Social",promo:"Promotions",
       today:"Today",yest:"Yesterday",to:"to me",compose:"Compose",starred:"Starred",snoozed:"Snoozed",
-      sent:"Sent",drafts:"Drafts",more:"More",reply:"Reply",forward:"Forward",newmsg:"New message",acc:"K"}
+      sent:"Sent",drafts:"Drafts",more:"More",reply:"Reply",forward:"Forward",newmsg:"New message",acc:"K",
+      count:"1–50 of 31,909",categories:"Categories",labels:"Labels"}
 };
 const P=["#2e8bda","#d9534f","#c77d1a","#8e44ad","#1f9d77","#c2417f","#2b7a78","#b9770e","#3a78c2","#6b7280"];
 
@@ -331,7 +342,29 @@ const scenarios=[
 let dev="pc", lang="ja", cur=0, token=0, work=[], openId=null, filter="";
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const initial=()=>scenarios[cur].mails.filter(m=>!m.in).map((m,i)=>({...m,id:m.s.ja+i,shown:true,unread:m.u}));
+/* ===== 공용 잡다한 수신 메일 (여러 곳에서 쌓인 모습) ===== */
+const NOISE=[
+ {f:{ja:"HBR",en:"HBR"},c:P[1],s:{ja:"【広告】現役講師による実践AI活用法",en:"[Ad] Practical AI methods from instructors"},p:{ja:"満足度9.7点のAI応用法をご紹介。",en:"Introducing AI methods rated 9.7/10."},b:{ja:"非IT職をスマートワーカーに変える、最も現実的なAI応用法をご紹介します。",en:"The most realistic AI methods to turn non-IT staff into smart workers."},t:"10:25",g:"today",u:true},
+ {f:{ja:"AI Festa",en:"AI Festa"},c:P[8],s:{ja:"[AI Festa 26] 出展参加のご案内",en:"[AI Festa 26] Exhibition invitation"},p:{ja:"ビジネスのためのAI Festa 26 展示案内。",en:"AI Festa 26 exhibition for business."},b:{ja:"成功するビジネスのためのAI Festa 26 展示参加をご案内します。",en:"Inviting you to exhibit at AI Festa 26 for successful business."},t:"10:16",g:"today",u:true,att:true},
+ {f:{ja:"株式会社クオリティア",en:"Qualitia Inc."},c:P[4],s:{ja:"ファミマも導入したBIMIとは？",en:"What is BIMI, adopted by FamilyMart?"},p:{ja:"ロゴ表示でメールの安全を見える化。",en:"Make email safety visible with a logo."},b:{ja:"メールにロゴを表示するBIMIのメリットをご紹介します。",en:"Introducing the benefits of BIMI logo display in email."},t:"10:07",g:"today",u:false},
+ {f:{ja:"Google Maps Platform",en:"Google Maps Platform"},c:P[0],s:{ja:"【登壇】データで変革する顧客体験",en:"[Session] Transforming CX with data"},p:{ja:"小売業界 DX カンファレンス。",en:"Retail industry DX conference."},b:{ja:"スーパー＆ドラッグストア業界の DX カンファレンスのご案内です。",en:"A DX conference for the supermarket & drugstore industry."},t:"10:03",g:"today",u:false},
+ {f:{ja:"セールスフォース",en:"Salesforce"},c:P[2],s:{ja:"[限定席] Agentic 時代が今、始まります",en:"[Limited] The Agentic era starts now"},p:{ja:"Agentforce Digital Summit 2026。",en:"Agentforce Digital Summit 2026."},b:{ja:"2026年7月16日、Agentic Marketing & Commerce 時代をリードする一日。",en:"July 16, 2026 — a day to lead the Agentic era."},t:"10:01",g:"today",u:false},
+ {f:{ja:"櫻井 くれは",en:"Kureha Sakurai"},c:P[5],s:{ja:"AI検索対策(GEO/LLMO)で何が変わる？",en:"What changes with AI search (GEO/LLMO)?"},p:{ja:"従来のSEOとの違いを動画で解説。",en:"Explaining the difference from SEO in a video."},b:{ja:"AI検索対策で何が変わるのか、従来のSEOとの違いを動画で解説します。",en:"A video on how AI search optimization differs from SEO."},t:"9:11",g:"today",u:false},
+ {f:{ja:"双日テックイノベーション",en:"Sojitz Tech"},c:P[6],s:{ja:"【製造業必見】計画変更に強い現場づくり",en:"[Manufacturing] Change-resilient sites"},p:{ja:"データ活用の進め方をご紹介。",en:"How to leverage data on the floor."},b:{ja:"製造現場の計画変更や進捗可視化の課題に、データ活用の進め方をご紹介します。",en:"How to use data for plan changes and progress visibility."},t:"8:52",g:"today",u:false},
+ {f:{ja:"メッセ ミュンヘン",en:"Messe München"},c:P[9],s:{ja:"[productronica 2027] 出展企業募集",en:"[productronica 2027] Call for exhibitors"},p:{ja:"電子製造・SMT設備展示会。",en:"Electronics & SMT equipment expo."},b:{ja:"独ミュンヘンの電子製造・SMT 設備展示会の出展企業を募集しています。",en:"Recruiting exhibitors for the Munich electronics & SMT expo."},t:"8:30",g:"today",u:false},
+ {f:{ja:"marketing@flyle.io",en:"marketing@flyle.io"},c:P[3],s:{ja:"【AI時代に見直すSVの役割】",en:"[Rethinking the SV role in the AI era]"},p:{ja:"AIで再設計する6つの業務。",en:"Six tasks redesigned with AI."},b:{ja:"AIで再設計する、スーパーバイザーの6つの業務について解説します。",en:"Explaining six supervisor tasks redesigned with AI."},t:"8:04",g:"today",u:false},
+ {f:{ja:"Team Tailscale",en:"Team Tailscale"},c:P[7],s:{ja:"Here's your June newsletter",en:"Here's your June newsletter"},p:{ja:"Aperture updates と Community Day。",en:"Aperture updates, Insiders, and CFP."},b:{ja:"Tailscale 6月のニュースレター：Aperture アップデートと Community Day のご案内。",en:"Tailscale June newsletter: Aperture updates and Community Day."},t:"3:16",g:"today",u:false},
+ {f:{ja:"アウトスタンディング",en:"Outstanding"},c:P[1],s:{ja:"投資を受けず顧客に時間を使う",en:"Spending time on customers, not funding"},p:{ja:"本日の記事は2編です。",en:"Two articles today."},b:{ja:"売上1000億の経営者インタビューほか、本日の記事は2編です。",en:"Two articles today, including a 100B-yen CEO interview."},t:"6/23",g:"older",u:false},
+ {f:{ja:"株式会社コラボスタイル",en:"Collabo Style"},c:P[0],s:{ja:"電子決裁後の手入力をゼロに",en:"Zero manual entry after e-approval"},p:{ja:"ワークフロー実践活用法のご紹介。",en:"Practical workflow tips."},b:{ja:"決裁のその先に潜む無駄をゼロにする、ワークフロー実践活用法をご紹介します。",en:"Eliminating waste after approval with practical workflow tips."},t:"6/23",g:"older",u:false},
+ {f:{ja:"スティ24",en:"Stay24"},c:P[4],s:{ja:"タンブラー専門企業 STAY24",en:"Tumbler specialist STAY24"},p:{ja:"夏のノベルティはタンブラーで。",en:"Tumblers for summer novelties."},b:{ja:"涼しい夏のノベルティに、タンブラー専門企業 STAY24 をご検討ください。",en:"Consider tumbler specialist STAY24 for cool summer novelties."},t:"6/23",g:"older",u:false},
+ {f:{ja:"サイボウズ kintone",en:"Cybozu kintone"},c:P[2],s:{ja:"ITツールの導入を拒む現場",en:"Sites that resist IT tools"},p:{ja:"kintoneなら浸透させられる？",en:"Can kintone get adopted?"},b:{ja:"費用をかけたIT導入は反発も。kintoneなら浸透させられる理由をご紹介します。",en:"Why kintone gets adopted where costly IT rollouts meet resistance."},t:"6/23",g:"older",u:false},
+ {f:{ja:"シェアードIT",en:"SharedIT"},c:P[8],s:{ja:"広報/マーケ提案書 2026年下半期",en:"PR/Marketing proposal H2 2026"},p:{ja:"商品案内 提案書のダウンロード。",en:"Download the product proposal."},b:{ja:"2026年下半期の広報/マーケティング商品案内 提案書を共有します（ダウンロード）。",en:"Sharing the H2 2026 PR/marketing product proposal (download)."},t:"6/23",g:"older",u:false,att:true},
+ {f:{ja:"Notion",en:"Notion"},c:P[9],s:{ja:"新機能のご案内：AIコネクター",en:"New: AI Connectors"},p:{ja:"外部ツールとAIで連携。",en:"Connect external tools with AI."},b:{ja:"Notion の新機能 AIコネクターで、外部ツールと連携できるようになりました。",en:"Notion's new AI Connectors let you link external tools."},t:"6/22",g:"older",u:false},
+ {f:{ja:"Zoom",en:"Zoom"},c:P[0],s:{ja:"アカウントのセキュリティ通知",en:"Account security notice"},p:{ja:"新しい端末からのサインイン。",en:"Sign-in from a new device."},b:{ja:"新しい端末からのサインインを検知しました。心当たりがない場合はご確認ください。",en:"We detected a sign-in from a new device. Please review if this wasn't you."},t:"6/22",g:"older",u:true},
+ {f:{ja:"freee会計",en:"freee"},c:P[4],s:{ja:"今月の経費レポートが準備できました",en:"Your monthly expense report is ready"},p:{ja:"ダウンロードしてご確認ください。",en:"Download to review."},b:{ja:"今月の経費レポートが準備できました。ダウンロードしてご確認ください。",en:"Your monthly expense report is ready. Download to review."},t:"6/22",g:"older",u:false,att:true},
+];
+const initial=()=>scenarios[cur].mails.filter(m=>!m.in).map((m,i)=>({...m,id:m.s.ja+i,shown:true,unread:m.u}))
+  .concat(NOISE.map((m,i)=>({...m,id:"n"+i,shown:true,unread:!!m.u})));
 const queue=()=>scenarios[cur].mails.filter(m=>m.in).map((m,i)=>({...m,id:"q"+i,shown:true,unread:true}));
 
 scenarios.forEach((s,i)=>{
@@ -341,16 +374,29 @@ scenarios.forEach((s,i)=>{
   $("chips").appendChild(c);
 });
 
+const labelRow=(c,n,cnt)=>`<div class="lbl"><span class="dot" style="background:${c}"></span>${n}${cnt?`<span class="cnt">${cnt}</span>`:""}</div>`;
 function paintStatic(){
-  const T=UI[lang];
+  const T=UI[lang], JA=lang==="ja";
   $("gmNav").innerHTML=`
     <button class="compose">✏ ${T.compose}</button>
     <div class="nav on"><span class="ico">📥</span>${T.inbox}<span class="cnt" id="navInbox"></span></div>
     <div class="nav"><span class="ico">★</span>${T.starred}</div>
     <div class="nav"><span class="ico">🕘</span>${T.snoozed}</div>
     <div class="nav"><span class="ico">📤</span>${T.sent}</div>
-    <div class="nav"><span class="ico">📝</span>${T.drafts}</div>
-    <div class="nav"><span class="ico">▾</span>${T.more}</div>`;
+    <div class="nav"><span class="ico">📝</span>${T.drafts}<span class="cnt">8</span></div>
+    <div class="nav"><span class="ico">▾</span>${T.more}</div>
+    <div class="grp">① ${JA?"米国":"USA"}</div>
+    ${labelRow("#34a853",JA?"広告":"Ads","31")}
+    ${labelRow("#34a853",JA?"ニュースレター":"Newsletter","6")}
+    ${labelRow("#34a853",JA?"インフルエンサー":"Influencer","")}
+    ${labelRow("#34a853",JA?"ツール通知":"Tool alerts","13")}
+    <div class="grp">② ${JA?"日本":"Japan"}</div>
+    ${labelRow("#ea4335",JA?"広告":"Ads","")}
+    ${labelRow("#ea4335",JA?"ニュースレター":"Newsletter","49")}
+    ${labelRow("#ea4335",JA?"イベント":"Events","11")}
+    <div class="grp">③ ${JA?"韓国":"Korea"}</div>
+    ${labelRow("#4285f4",JA?"業務":"Work","")}`;
+  if($("gmCount"))$("gmCount").textContent=T.count;
   $("gmTabs").innerHTML=`
     <span class="gt on"><span>📥</span>${T.primary}</span>
     <span class="gt"><span>🏷</span>${T.promo}</span>
@@ -370,22 +416,22 @@ function renderList(){
   const T=UI[lang], list=visible();
   const cnt=work.filter(m=>m.shown&&m.unread).length;
   if($("navInbox"))$("navInbox").textContent=cnt;
-  // PC rows
+  const tcol=m=>m.g==="today"?m.t:(m.g==="yest"?"6/23":m.t);
+  // PC rows (아바타 없음 · 실제 Gmail 리스트)
   $("pcList").innerHTML=list.map(m=>`
     <div class="grow ${m.unread?"unread":"read"}" data-id="${m.id}">
       <span class="ck">☐</span><span class="star">☆</span>
-      <span class="gav" style="background:${m.c}">${av(m)}</span>
       <span class="from">${m.f[lang]}</span>
-      <span class="mid"><span class="sub">${m.s[lang]}</span> <span class="snip">— ${m.p[lang]}</span></span>
-      <span class="time">${m.t}</span></div>`).join("");
+      <span class="mid"><span class="sub">${m.s[lang]}</span> <span class="snip">- ${m.p[lang]}</span></span>
+      ${m.att?'<span class="att">📎</span>':''}<span class="time">${tcol(m)}</span></div>`).join("");
   $("pcList").querySelectorAll(".grow").forEach(r=>r.onclick=()=>openMail(r.dataset.id));
-  // Mobile rows
+  // Mobile rows (앱 스타일 · 아바타 유지)
   $("mbList").innerHTML=list.map(m=>`
     <div class="mrow ${m.unread?"unread":""}" data-id="${m.id}">
       <span class="gav" style="background:${m.c}">${av(m)}</span>
-      <div class="mid"><div class="l1"><span class="from">${m.f[lang]}</span><span class="time">${m.t}</span></div>
+      <div class="mid"><div class="l1"><span class="from">${m.f[lang]}</span><span class="time">${tcol(m)}</span></div>
       <div class="sub">${m.s[lang]}</div><div class="snip">${m.p[lang]}</div></div>
-      <span class="star">☆</span></div>`).join("");
+      <span class="star">${m.att?"📎":"☆"}</span></div>`).join("");
   $("mbList").querySelectorAll(".mrow").forEach(r=>r.onclick=()=>openMail(r.dataset.id));
 }
 

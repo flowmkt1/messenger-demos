@@ -296,14 +296,14 @@
 <script>
 /* ===== UI 텍스트 ===== */
 const UI={
-  ja:{search:"検索",inbox:"受信トレイ",focused:"優先",other:"その他",today:"今日",yest:"昨日",
+  ja:{search:"検索",inbox:"受信トレイ",focused:"優先",other:"その他",today:"今日",yest:"昨日",older:"今週以前",
       to:"宛先: あなた",empty:"メールを選択して内容を表示",newmail:"新着メール",
       reply:"返信",replyall:"全員に返信",forward:"転送",del:"削除",arch:"アーカイブ",move:"移動",flag:"フラグ",
       favorites:"お気に入り",drafts:"下書き",sent:"送信済み",deleted:"削除済み",junk:"迷惑メール",archive:"アーカイブ",
       expenses:"経費",invoices:"請求書",newbtn:"新規メール",
       tabs:{home:"ホーム",view:"表示",help:"ヘルプ",msg:"メッセージ",ins:"挿入",fmt:"書式",opt:"オプション"},
       bottom:["メール","予定表","連絡先","設定"]},
-  en:{search:"Search",inbox:"Inbox",focused:"Focused",other:"Other",today:"Today",yest:"Yesterday",
+  en:{search:"Search",inbox:"Inbox",focused:"Focused",other:"Other",today:"Today",yest:"Yesterday",older:"Earlier",
       to:"To: You",empty:"Select an email to read",newmail:"New message",
       reply:"Reply",replyall:"Reply all",forward:"Forward",del:"Delete",arch:"Archive",move:"Move",flag:"Flag",
       favorites:"Favorites",drafts:"Drafts",sent:"Sent Items",deleted:"Deleted Items",junk:"Junk Email",archive:"Archive",
@@ -411,7 +411,29 @@ const scenarios=[
 let dev="pc", lang="ja", cur=0, token=0, work=[], openId=null, filter="";
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const initial=()=>scenarios[cur].mails.filter(m=>!m.in).map((m,i)=>({...m,id:m.s.ja+i,shown:true,unread:m.u}));
+/* ===== 공용 잡다한 수신 메일 (여러 곳에서 쌓인 모습) ===== */
+const NOISE=[
+ {f:{ja:"HBR",en:"HBR"},c:P[1],s:{ja:"【広告】現役講師による実践AI活用法",en:"[Ad] Practical AI methods from instructors"},p:{ja:"満足度9.7点のAI応用法をご紹介。",en:"Introducing AI methods rated 9.7/10."},b:{ja:"非IT職をスマートワーカーに変える、最も現実的なAI応用法をご紹介します。",en:"The most realistic AI methods to turn non-IT staff into smart workers."},t:"10:25",g:"today",u:true},
+ {f:{ja:"AI Festa",en:"AI Festa"},c:P[8],s:{ja:"[AI Festa 26] 出展参加のご案内",en:"[AI Festa 26] Exhibition invitation"},p:{ja:"ビジネスのためのAI Festa 26 展示案内。",en:"AI Festa 26 exhibition for business."},b:{ja:"成功するビジネスのためのAI Festa 26 展示参加をご案内します。",en:"Inviting you to exhibit at AI Festa 26 for successful business."},t:"10:16",g:"today",u:true},
+ {f:{ja:"株式会社クオリティア",en:"Qualitia Inc."},c:P[4],s:{ja:"ファミマも導入したBIMIとは？",en:"What is BIMI, adopted by FamilyMart?"},p:{ja:"ロゴ表示でメールの安全を見える化。",en:"Make email safety visible with a logo."},b:{ja:"メールにロゴを表示するBIMIのメリットをご紹介します。",en:"Introducing the benefits of BIMI logo display in email."},t:"10:07",g:"today",u:false},
+ {f:{ja:"Google Maps Platform",en:"Google Maps Platform"},c:P[0],s:{ja:"【登壇】データで変革する顧客体験",en:"[Session] Transforming CX with data"},p:{ja:"小売業界 DX カンファレンス。",en:"Retail industry DX conference."},b:{ja:"スーパー＆ドラッグストア業界の DX カンファレンスのご案内です。",en:"A DX conference for the supermarket & drugstore industry."},t:"10:03",g:"today",u:false},
+ {f:{ja:"セールスフォース",en:"Salesforce"},c:P[2],s:{ja:"[限定席] Agentic 時代が今、始まります",en:"[Limited] The Agentic era starts now"},p:{ja:"Agentforce Digital Summit 2026。",en:"Agentforce Digital Summit 2026."},b:{ja:"2026年7月16日、Agentic Marketing & Commerce 時代をリードする一日。",en:"July 16, 2026 — a day to lead the Agentic era."},t:"10:01",g:"today",u:false},
+ {f:{ja:"櫻井 くれは",en:"Kureha Sakurai"},c:P[5],s:{ja:"AI検索対策(GEO/LLMO)で何が変わる？",en:"What changes with AI search (GEO/LLMO)?"},p:{ja:"従来のSEOとの違いを動画で解説。",en:"Explaining the difference from SEO in a video."},b:{ja:"AI検索対策で何が変わるのか、従来のSEOとの違いを動画で解説します。",en:"A video on how AI search optimization differs from SEO."},t:"9:11",g:"today",u:false},
+ {f:{ja:"双日テックイノベーション",en:"Sojitz Tech"},c:P[6],s:{ja:"【製造業必見】計画変更に強い現場づくり",en:"[Manufacturing] Change-resilient sites"},p:{ja:"データ活用の進め方をご紹介。",en:"How to leverage data on the floor."},b:{ja:"製造現場の計画変更や進捗可視化の課題に、データ活用の進め方をご紹介します。",en:"How to use data for plan changes and progress visibility."},t:"8:52",g:"today",u:false},
+ {f:{ja:"メッセ ミュンヘン",en:"Messe München"},c:P[9],s:{ja:"[productronica 2027] 出展企業募集",en:"[productronica 2027] Call for exhibitors"},p:{ja:"電子製造・SMT設備展示会。",en:"Electronics & SMT equipment expo."},b:{ja:"独ミュンヘンの電子製造・SMT 設備展示会の出展企業を募集しています。",en:"Recruiting exhibitors for the Munich electronics & SMT expo."},t:"8:30",g:"today",u:false},
+ {f:{ja:"marketing@flyle.io",en:"marketing@flyle.io"},c:P[3],s:{ja:"【AI時代に見直すSVの役割】",en:"[Rethinking the SV role in the AI era]"},p:{ja:"AIで再設計する6つの業務。",en:"Six tasks redesigned with AI."},b:{ja:"AIで再設計する、スーパーバイザーの6つの業務について解説します。",en:"Explaining six supervisor tasks redesigned with AI."},t:"8:04",g:"today",u:false},
+ {f:{ja:"Team Tailscale",en:"Team Tailscale"},c:P[7],s:{ja:"Here's your June newsletter",en:"Here's your June newsletter"},p:{ja:"Aperture updates と Community Day。",en:"Aperture updates, Insiders, and CFP."},b:{ja:"Tailscale 6月のニュースレター：Aperture アップデートと Community Day のご案内。",en:"Tailscale June newsletter: Aperture updates and Community Day."},t:"3:16",g:"today",u:false},
+ {f:{ja:"アウトスタンディング",en:"Outstanding"},c:P[1],s:{ja:"投資を受けず顧客に時間を使う",en:"Spending time on customers, not funding"},p:{ja:"本日の記事は2編です。",en:"Two articles today."},b:{ja:"売上1000億の経営者インタビューほか、本日の記事は2編です。",en:"Two articles today, including a 100B-yen CEO interview."},t:"6/23",g:"older",u:false},
+ {f:{ja:"株式会社コラボスタイル",en:"Collabo Style"},c:P[0],s:{ja:"電子決裁後の手入力をゼロに",en:"Zero manual entry after e-approval"},p:{ja:"ワークフロー実践活用法のご紹介。",en:"Practical workflow tips."},b:{ja:"決裁のその先に潜む無駄をゼロにする、ワークフロー実践活用法をご紹介します。",en:"Eliminating waste after approval with practical workflow tips."},t:"6/23",g:"older",u:false},
+ {f:{ja:"スティ24",en:"Stay24"},c:P[4],s:{ja:"タンブラー専門企業 STAY24",en:"Tumbler specialist STAY24"},p:{ja:"夏のノベルティはタンブラーで。",en:"Tumblers for summer novelties."},b:{ja:"涼しい夏のノベルティに、タンブラー専門企業 STAY24 をご検討ください。",en:"Consider tumbler specialist STAY24 for cool summer novelties."},t:"6/23",g:"older",u:false},
+ {f:{ja:"サイボウズ kintone",en:"Cybozu kintone"},c:P[2],s:{ja:"ITツールの導入を拒む現場",en:"Sites that resist IT tools"},p:{ja:"kintoneなら浸透させられる？",en:"Can kintone get adopted?"},b:{ja:"費用をかけたIT導入は反発も。kintoneなら浸透させられる理由をご紹介します。",en:"Why kintone gets adopted where costly IT rollouts meet resistance."},t:"6/23",g:"older",u:false},
+ {f:{ja:"シェアードIT",en:"SharedIT"},c:P[8],s:{ja:"広報/マーケ提案書 2026年下半期",en:"PR/Marketing proposal H2 2026"},p:{ja:"商品案内 提案書のダウンロード。",en:"Download the product proposal."},b:{ja:"2026年下半期の広報/マーケティング商品案内 提案書を共有します（ダウンロード）。",en:"Sharing the H2 2026 PR/marketing product proposal (download)."},t:"6/23",g:"older",u:false},
+ {f:{ja:"Notion",en:"Notion"},c:P[9],s:{ja:"新機能のご案内：AIコネクター",en:"New: AI Connectors"},p:{ja:"外部ツールとAIで連携。",en:"Connect external tools with AI."},b:{ja:"Notion の新機能 AIコネクターで、外部ツールと連携できるようになりました。",en:"Notion's new AI Connectors let you link external tools."},t:"6/22",g:"older",u:false},
+ {f:{ja:"Zoom",en:"Zoom"},c:P[0],s:{ja:"アカウントのセキュリティ通知",en:"Account security notice"},p:{ja:"新しい端末からのサインイン。",en:"Sign-in from a new device."},b:{ja:"新しい端末からのサインインを検知しました。心当たりがない場合はご確認ください。",en:"We detected a sign-in from a new device. Please review if this wasn't you."},t:"6/22",g:"older",u:true},
+ {f:{ja:"freee会計",en:"freee"},c:P[4],s:{ja:"今月の経費レポートが準備できました",en:"Your monthly expense report is ready"},p:{ja:"ダウンロードしてご確認ください。",en:"Download to review."},b:{ja:"今月の経費レポートが準備できました。ダウンロードしてご確認ください。",en:"Your monthly expense report is ready. Download to review."},t:"6/22",g:"older",u:false},
+];
+const initial=()=>scenarios[cur].mails.filter(m=>!m.in).map((m,i)=>({...m,id:m.s.ja+i,shown:true,unread:m.u}))
+  .concat(NOISE.map((m,i)=>({...m,id:"n"+i,shown:true,unread:!!m.u})));
 const queue=()=>scenarios[cur].mails.filter(m=>m.in).map((m,i)=>({...m,id:"q"+i,shown:true,unread:true}));
 let pending=[];
 
@@ -477,7 +499,7 @@ function renderList(){
   // PC
   let html="",g=null;
   list.forEach(m=>{
-    if(m.g!==g){g=m.g;html+=`<div class="grphd">${g==="today"?T.today:T.yest}</div>`;}
+    if(m.g!==g){g=m.g;html+=`<div class="grphd">${g==="today"?T.today:g==="yest"?T.yest:T.older}</div>`;}
     html+=`<div class="mailrow${m.unread?" unread":""}${m.id===openId?" sel":""}" data-id="${m.id}">
       ${m.unread?'<span class="udot"></span>':''}
       <div class="av" style="background:${m.c}">${av(m)}</div>
@@ -489,7 +511,7 @@ function renderList(){
   // Mobile
   let mh="";g=null;
   list.forEach(m=>{
-    if(m.g!==g){g=m.g;mh+=`<div class="mgrp">${g==="today"?T.today:T.yest}</div>`;}
+    if(m.g!==g){g=m.g;mh+=`<div class="mgrp">${g==="today"?T.today:g==="yest"?T.yest:T.older}</div>`;}
     mh+=`<div class="mrow${m.unread?" unread":""}" data-id="${m.id}">
       ${m.unread?'<span class="udot"></span>':''}
       <div class="av" style="background:${m.c}">${av(m)}</div>
