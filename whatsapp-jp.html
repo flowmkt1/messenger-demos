@@ -116,9 +116,14 @@
   .inputbar .ic{color:#8696a0;display:flex;align-items:center;}
   .inputbar .mic{width:42px;height:42px;border-radius:50%;background:#008069;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;color:#fff;}
+  /* 좌상단 컨트롤 패널 표시/숨김 토글 (영상 캡처 시 패널 가림 방지) */
+  .controls.hid{display:none !important;}
+  .ctrl-tgl{position:fixed;left:8px;top:8px;z-index:100000;width:26px;height:26px;border-radius:8px;background:rgba(20,24,32,.5);color:#dbe4ee;border:1px solid rgba(120,140,160,.35);cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;opacity:.3;transition:opacity .15s;padding:0;}
+  .ctrl-tgl:hover{opacity:1;}
 </style>
 </head>
 <body>
+<button class="ctrl-tgl" id="ctrlTgl" type="button" title="컨트롤 패널 표시/숨김" aria-label="컨트롤 패널 표시/숨김">✕</button>
 
   <div class="controls">
     <div class="lbl">언어 (화면 표시 언어)</div>
@@ -495,5 +500,6 @@ recBtn.onclick=()=>{ _recording? _rec.stop() : _startRec(); };
 
 play();
 </script>
+<script>(function(){var t=document.getElementById('ctrlTgl'),c=document.querySelector('.controls');if(!t||!c)return;var hid=false;try{hid=localStorage.getItem('mm_ctrl_hid')==='1';}catch(e){}function ap(){c.classList.toggle('hid',hid);t.textContent=hid?'☰':'✕';t.title=hid?'컨트롤 패널 표시':'컨트롤 패널 숨김';}ap();t.addEventListener('click',function(){hid=!hid;try{localStorage.setItem('mm_ctrl_hid',hid?'1':'0');}catch(e){}ap();});})();</script>
 </body>
 </html>
