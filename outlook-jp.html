@@ -298,6 +298,7 @@
     </div>
   </div>
 
+<script src="demo-data.js"></script>
 <script>
 /* ===== UI 텍스트 ===== */
 const UI={
@@ -437,6 +438,8 @@ const NOISE=[
  {f:{ja:"Zoom",en:"Zoom"},c:P[0],s:{ja:"アカウントのセキュリティ通知",en:"Account security notice"},p:{ja:"新しい端末からのサインイン。",en:"Sign-in from a new device."},b:{ja:"新しい端末からのサインインを検知しました。心当たりがない場合はご確認ください。",en:"We detected a sign-in from a new device. Please review if this wasn't you."},t:"6/22",g:"older",u:true},
  {f:{ja:"freee会計",en:"freee"},c:P[4],s:{ja:"今月の経費レポートが準備できました",en:"Your monthly expense report is ready"},p:{ja:"ダウンロードしてご確認ください。",en:"Download to review."},b:{ja:"今月の経費レポートが準備できました。ダウンロードしてご確認ください。",en:"Your monthly expense report is ready. Download to review."},t:"6/22",g:"older",u:false},
 ];
+/* 공용 rich 데이터(demo-data.js)로 교체 — 로드 실패 시 위 인라인이 폴백 */
+if(window.DEMO){scenarios.length=0;DEMO.scenarios.forEach(s=>scenarios.push(s));NOISE.length=0;DEMO.NOISE.forEach(n=>NOISE.push(n));}
 const initial=()=>scenarios[cur].mails.filter(m=>!m.in).map((m,i)=>({...m,id:m.s.ja+i,shown:true,unread:m.u}))
   .concat(NOISE.map((m,i)=>({...m,id:"n"+i,shown:true,unread:!!m.u})));
 const queue=()=>scenarios[cur].mails.filter(m=>m.in).map((m,i)=>({...m,id:"q"+i,shown:true,unread:true}));
