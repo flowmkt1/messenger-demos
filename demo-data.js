@@ -436,5 +436,21 @@ const NOISE=[
      en:"This is freee.\n\nYour monthly (June) expense report is ready.\n・Total expenses: ¥248,300\n・Unapproved: 3\n・Needs attention: 1 item missing a receipt\n\nThe report PDF is attached. Please process the unapproved items and attach the receipt. See the dashboard for details."}},
 ];
 
+/* 정규화: 모든 메일에 p(미리보기)와 b(본문)를 보장. p 누락 시 본문 첫 줄에서 생성 */
+(function(){
+  const first=(m,t)=>{
+    const lines=((m.b&&m.b[t])||"").split("\n").map(x=>x.trim()).filter(Boolean)
+      .map(x=>x.replace(/^《PR》\s*/,"").replace(/^\[PR\]\s*/,""));
+    const greet=l=>/(さん|様|各位|皆さま|皆さん|お疲れ様です|お疲れさまです|いつもお世話になっております|先生|師長|ドライバー各位)$|^(Hi|Hello|To\b|Dear|This is)/.test(l)||/[,、]$/.test(l);
+    const pick=lines.filter(l=>!greet(l))[0]||lines[0]||"";
+    return pick.length>60?pick.slice(0,58)+"…":pick;
+  };
+  const all=[].concat.apply([],scenarios.map(s=>s.mails)).concat(NOISE);
+  all.forEach(m=>{
+    if(!m.p) m.p={ja:first(m,"ja"),en:first(m,"en")};
+    if(!m.b) m.b={ja:m.p.ja,en:m.p.en};
+  });
+})();
+
 window.DEMO={P,scenarios,NOISE};
 })();
